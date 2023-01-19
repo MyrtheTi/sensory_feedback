@@ -4,6 +4,7 @@
  * @create date 2023-01-13 14:13:32
  * @desc Control the strength of the vibrators using PWM
  run with CircuitPython
+ When turned on with PWM, the motors create a high pitch sound.
 """
 
 import time
@@ -24,12 +25,14 @@ if __name__ == '__main__':
     D10 = pwmio.PWMOut(board.D10)
 
     # set the duty cycle; the percentage of time the motors are turned on
-    print(D7.frequency)  # find out frequency, default is 500 Hz
-    print(D7.variable_frequency)
-    for i in range(0, 10):  # start feeling from 3-5%
+
+    for i in range(0, 10):  # start 'vibration' feeling from 3-5%
         print(i)
-        D7.duty_cycle = duty_cycle_value(i)
+        D8.duty_cycle = duty_cycle_value(i)
         time.sleep(2)
-        D7.duty_cycle = 0
+        D8.duty_cycle = 0
         time.sleep(1)
-    D7.duty_cycle = 0  # still makes a noise and doesn't seem to be completely turned off
+        D9.duty_cycle = duty_cycle_value(i)
+        time.sleep(2)
+        D9.duty_cycle = 0
+        time.sleep(1)

@@ -2,8 +2,7 @@
  * @author Myrthe Tilleman
  * @email mtillerman@ossur.com
  * @create date 2023-01-13 11:38:44
- * @desc Turn the vibrators on and off
- run with CircuitPython
+ * @desc Turn the vibrators on and off, run with CircuitPython
 """
 
 import time
@@ -24,33 +23,28 @@ D10.direction = digitalio.Direction.OUTPUT
 
 
 def vibrators_off():
-    """ Vibrators are turned off when their value is set to True.
+    """ Vibrators are turned off when their value is set to False.
     """
-    D7.value = True
-    D8.value = True
-    D9.value = True
-    D10.value = True
-
-
-vibrators_off()
-
-while True:
     D7.value = False
-    time.sleep(0.010)
-    vibrators_off()
-    time.sleep(2.0)
-
     D8.value = False
-    time.sleep(0.010)
-    vibrators_off()
-    time.sleep(2.0)
-
     D9.value = False
-    time.sleep(0.010)
-    vibrators_off()
-    time.sleep(2.0)
-
     D10.value = False
-    time.sleep(0.010)
+
+
+if __name__ == '__main__':
+
     vibrators_off()
-    time.sleep(2.0)
+
+    for i in range(0, 10):  # test sensory threshold; feel 'haptic' short feedback from ~3ms
+        on_time = i / 100  # s on
+        print(on_time, 's')
+        D8.value = True
+        time.sleep(on_time)
+        vibrators_off()
+        time.sleep(2.0)
+        D10.value = True
+        time.sleep(on_time)
+        vibrators_off()
+        time.sleep(2.0)
+
+    vibrators_off()
