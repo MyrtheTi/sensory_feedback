@@ -8,8 +8,10 @@
 """
 
 import time
-import board
+
 import pwmio
+
+from vibrators_on_off import vibrator_list
 
 
 def duty_cycle_value(percent):
@@ -17,22 +19,35 @@ def duty_cycle_value(percent):
     return int(percent / 100 * 65535)
 
 
+def set_duty_cycle(vibrator, intensity, time_on, time_off=0.0):
+    """ Turn on the vibration motors for a specified time using PWM.
+
+    Args:
+        vibrator (_type_): PWM I/O pin with the direction out.
+        intensity (_type_): Sets the duty cycle;
+        the percentage of time the motors are turned on.
+        time_on (_type_): Number of seconds the motor is turned on.
+        time_off (float, optional): _Number of seconds the motor is turned off.
+        Defaults to 0.0.
+    """
+    vibrator.duty_cycle = duty_cycle_value(intensity)
+    time.sleep(time_on)
+    vibrator.duty_cycle = 0
+    time.sleep(time_off)
+
+
 if __name__ == '__main__':
 
-    D7 = pwmio.PWMOut(board.D7, duty_cycle=0)
-    D8 = pwmio.PWMOut(board.D8)
-    D9 = pwmio.PWMOut(board.D9)
-    D10 = pwmio.PWMOut(board.D10)
+    for vibrator in vibrator_list:  # set-up pins
+        vibrator["PIN"] = pwmio.PWMOut(vibrator["PIN"], duty_cycle=0)
 
-    # set the duty cycle; the percentage of time the motors are turned on
+    for vibrator in vibrator_list:  # test motors one by one
+        for i in range(3, 10):  # start 'vibration' feeling from 3-5%
+            print(i)
+            time.sleep(1)
 
-    for i in range(0, 10):  # start 'vibration' feeling from 3-5%
-        print(i)
-        D8.duty_cycle = duty_cycle_value(i)
-        time.sleep(2)
-        D8.duty_cycle = 0
-        time.sleep(1)
-        D9.duty_cycle = duty_cycle_value(i)
-        time.sleep(2)
-        D9.duty_cycle = 0
-        time.sleep(1)
+            # test sensory threshold; feel 'haptic' short feedback, but still noise
+            for t in range(0, 10):
+                on_time = t / 100  # s on
+                print(on_time, 's')
+                set_duty_cycle(vibrator["PIN"], i, on_time, 2)

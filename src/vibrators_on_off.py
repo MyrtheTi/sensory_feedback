@@ -6,45 +6,54 @@
 """
 
 import time
+
 import board
 import digitalio
 
-D7 = digitalio.DigitalInOut(board.D7)
-D7.direction = digitalio.Direction.OUTPUT
 
-D8 = digitalio.DigitalInOut(board.D8)
-D8.direction = digitalio.Direction.OUTPUT
-
-D9 = digitalio.DigitalInOut(board.D9)
-D9.direction = digitalio.Direction.OUTPUT
-
-D10 = digitalio.DigitalInOut(board.D10)
-D10.direction = digitalio.Direction.OUTPUT
+vibrator_list = [
+    {"PIN": board.D7},
+    {"PIN": board.D8},
+    {"PIN": board.D9},
+    {"PIN": board.D10}
+]
 
 
-def vibrators_off():
+def vibrators_off(vibrator_list):
     """ Vibrators are turned off when their value is set to False.
+    Only works after the pins have been set to 'DigitalInOut'.
     """
-    D7.value = False
-    D8.value = False
-    D9.value = False
-    D10.value = False
+    for vibrator in vibrator_list:
+        vibrator["PIN"].value = False
+
+
+def vibration_frequency(vibrator, time_on, time_off=0.0):
+    """Turn the vibration motors on and off for a specified amount of time.
+
+    Args:
+        vibrator (_type_): Digital I/O pin with the direction OUTPUT.
+        time_on (_type_): Number of seconds the motor is turned on.
+        time_off (float, optional): Number of seconds the motor is turned off.
+        Defaults to 0.0.
+    """
+    vibrator.value = True
+    time.sleep(time_on)
+    vibrator.value = False
+    time.sleep(time_off)
 
 
 if __name__ == '__main__':
 
-    vibrators_off()
+    for vibrator in vibrator_list:  # set-up pins
+        vibrator["PIN"] = digitalio.DigitalInOut(vibrator["PIN"])
+        vibrator["PIN"].direction = digitalio.Direction.OUTPUT
 
-    for i in range(0, 10):  # test sensory threshold; feel 'haptic' short feedback from ~3ms
-        on_time = i / 100  # s on
-        print(on_time, 's')
-        D8.value = True
-        time.sleep(on_time)
-        vibrators_off()
-        time.sleep(2.0)
-        D10.value = True
-        time.sleep(on_time)
-        vibrators_off()
-        time.sleep(2.0)
+    vibrators_off(vibrator_list)
+    for vibrator in vibrator_list:  # test motors one by one
+        # test sensory threshold; feel 'haptic' short feedback from ~3ms
+        for i in range(0, 10):
+            on_time = i / 1000  # s on
+            print(on_time, 's')
+            vibration_frequency(vibrator["PIN"], on_time, 2)
 
-    vibrators_off()
+    vibrators_off(vibrator_list)
