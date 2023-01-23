@@ -7,24 +7,7 @@
 
 import time
 
-import board
-import digitalio
-
-
-vibrator_list = [
-    {"PIN": board.D7},
-    {"PIN": board.D8},
-    {"PIN": board.D9},
-    {"PIN": board.D10}
-]
-
-
-def vibrators_off(vibrator_list):
-    """ Vibrators are turned off when their value is set to False.
-    Only works after the pins have been set to 'DigitalInOut'.
-    """
-    for vibrator in vibrator_list:
-        vibrator["PIN"].value = False
+from utils import VIB_PIN_LIST, initiate_pin_output, motor_on
 
 
 def vibration_frequency(vibrator, time_on, time_off=0.0):
@@ -44,16 +27,17 @@ def vibration_frequency(vibrator, time_on, time_off=0.0):
 
 if __name__ == '__main__':
 
-    for vibrator in vibrator_list:  # set-up pins
-        vibrator["PIN"] = digitalio.DigitalInOut(vibrator["PIN"])
-        vibrator["PIN"].direction = digitalio.Direction.OUTPUT
+    initiate_pin_output(VIB_PIN_LIST)
 
-    vibrators_off(vibrator_list)
-    for vibrator in vibrator_list:  # test motors one by one
+    for vibrator in VIB_PIN_LIST:
+        motor_on(vibrator)
+
+    for vibrator in VIB_PIN_LIST:  # test motors one by one
         # test sensory threshold; feel 'haptic' short feedback from ~3ms
         for i in range(0, 10):
             on_time = i / 1000  # s on
             print(on_time, 's')
             vibration_frequency(vibrator["PIN"], on_time, 2)
 
-    vibrators_off(vibrator_list)
+    for vibrator in VIB_PIN_LIST:
+        motor_on(vibrator)
