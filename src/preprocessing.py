@@ -2,11 +2,11 @@
  * @author Myrthe Tilleman
  * @email mtillerman@ossur.com
  * @create date 2023-01-11 10:29:57
- * @desc [description]
+ * @desc Process EMG data from file: normalisation and defining active muscle
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def extract_data(filename, verbose=True, comma=False):
@@ -15,7 +15,8 @@ def extract_data(filename, verbose=True, comma=False):
     in a different column, ordered by timestamp.
 
     Args:
-        filename (data frame): csv file with EMG data recorded using Ossur Toolbox.
+        filename (data frame): csv file with EMG data recorded using Ossur
+        Toolbox.
         verbose (bool, optional): _description_. Defaults to True.
         comma (bool, optional): Whether decimals are denoted after a comma.
         Defaults to False.
@@ -46,19 +47,21 @@ def normalise_data(data_frame):
     cols = ['BSMB_MUSCLE_EXTEND', 'BSMB_MUSCLE_FLEX']
     MVC = data_frame[cols].abs().max()  # TODO retrieve this from file after EMG calibration
 
-    normalised = pd.DataFrame(data_frame.iloc[100:, 0])  # take the timestamp
-    RMS_column = pd.DataFrame(columns=cols)
+    # create a data frame to normalise and leave other data intact
+    normalised = pd.DataFrame(data_frame.iloc[100:,
+                              ~data_frame.columns.isin(cols)])
+    rms_column = pd.DataFrame(columns=cols)
 
     for i in range(100, len(data_frame)):  # use the previous 100 points
-        RMS_window = data_frame.iloc[i - 100:i, 1:]  # exclude timestamp
+        RMS_window = data_frame[cols].iloc[i - 100:i]
         square = RMS_window.pow(2)
-        RMS = square.mean(axis=0).pow(0.5) / MVC
+        rms = square.mean(axis=0).pow(0.5) / MVC
 
-        RMS_df = pd.DataFrame(np.expand_dims(RMS.to_numpy(), axis=0),
+        rms_df = pd.DataFrame(np.expand_dims(rms.to_numpy(), axis=0),
                               columns=cols, index=[i])
-        RMS_column = pd.concat([RMS_column, RMS_df], ignore_index=False)
+        rms_column = pd.concat([rms_column, rms_df], ignore_index=False)
 
-    normalised = pd.concat([normalised, RMS_column], axis=1)
+    normalised = pd.concat([normalised, rms_column], axis=1)
     return normalised
 
 
@@ -81,11 +84,22 @@ def define_dominant_muscle(data_frame):
 
 
 if __name__ == "__main__":
-    data_file = r"C:\Users\mtillerman\OneDrive - Ossur hf\Documents\Ossur\Ossur Toolbox 1.4 Dev\tmp\20230111151536909_210000.8.Variables.csv"
-    data = extract_data(data_file)
-    data = data[['timestamp', 'BSMB_MUSCLE_EXTEND', 'BSMB_MUSCLE_FLEX']]
+    folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/EMG_data/"
+    # data_file = "20230111151536909_210000.8.Variables.csv"
+    # data_file = "ramp descend.csv"
+    # data_file = "signal check sitting.csv"
+    data_file = "stairs prev settings.csv"
+    data = extract_data(folder + data_file)
+    print(data.head())
+
+    # select columns to process
+    data = data[['timestamp', 'BASE_ACTIVITY', 'BASE_GAIT_PHASE',
+                 'BSMB_MUSCLE_EXTEND', 'BSMB_MUSCLE_FLEX']]
     print(data)
+    print(data.min())
+    print(data.max())
+
     normal = normalise_data(data)
-    print('normal\n', normal)
-    dom = define_dominant_muscle(normal)
-    print(dom)
+    print(normal)
+    # dom = define_dominant_muscle(normal)
+    # print(dom)
