@@ -7,6 +7,7 @@
 
 import board
 import digitalio
+import pandas as pd
 
 VIB_PIN_LIST = [
     {"LEVEL": 0, "PIN": board.D7, "PREV_TIME": -1},
@@ -18,6 +19,11 @@ VIB_PIN_LIST = [
 VIBRATION_TIME = 0.004  # seconds  TODO read from file after calibration
 MIN_OFF_TIME = 0.100  # seconds
 MAX_OFF_TIME = 1.000  # seconds
+
+EXTEND = 'BSMB_MUSCLE_EXTEND'
+FLEX = 'BSMB_MUSCLE_FLEX'
+LEVELS = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
+MVC = pd.read_csv('emg_files/MVC.csv')  # pick for the correct subject?
 
 
 def initiate_pin_output(vibrator_list):

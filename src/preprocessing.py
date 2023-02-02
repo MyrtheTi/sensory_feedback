@@ -5,12 +5,9 @@
  * @desc Process EMG data from file: normalise and define activation level
 """
 
-import numpy as np
 import pandas as pd
 
-EXTEND = 'BSMB_MUSCLE_EXTEND'
-FLEX = 'BSMB_MUSCLE_FLEX'
-LEVELS = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
+from utils import EXTEND, FLEX, LEVELS, MVC
 
 
 def extract_data(filename, verbose=True, comma=False):
@@ -46,27 +43,19 @@ def normalise_data(data_frame):
     maximum voluntary contraction (MVC).
 
     Args:
-        data_frame (data frame): raw EMG data
+        data_frame (data frame): raw EMG data of 100 previous measurements
+
+    Returns:
+        data frame: with 1 row with the normalised EMG data
     """
-    cols = [EXTEND, FLEX]
-    MVC = 0.4 * data_frame[cols].abs().max()  # TODO retrieve this from file after EMG calibration
+    normalised = data_frame.iloc[-1]
+    RMS_window = data_frame[[EXTEND, FLEX]]
 
-    # create a data frame to normalise and leave other data intact
-    normalised = pd.DataFrame(data_frame.iloc[100:,
-                              ~data_frame.columns.isin(cols)])
-    rms_column = pd.DataFrame(columns=cols)
+    square = RMS_window.pow(2)
+    rms = square.mean(axis=0).pow(0.5) / (0.4 * MVC)
 
-    for i in range(100, len(data_frame)):  # use the previous 100 points
-        # TODO remove loop here
-        RMS_window = data_frame[cols].iloc[i - 100:i]
-        square = RMS_window.pow(2)
-        rms = square.mean(axis=0).pow(0.5) / MVC
-
-        rms_df = pd.DataFrame(np.expand_dims(rms.to_numpy(), axis=0),
-                              columns=cols, index=[i])
-        rms_column = pd.concat([rms_column, rms_df], ignore_index=False)
-
-    normalised = pd.concat([normalised, rms_column], axis=1)
+    normalised[EXTEND] = rms[EXTEND]
+    normalised[FLEX] = rms[FLEX]
     return normalised
 
 
@@ -81,7 +70,7 @@ def threshold_reached(data_frame, vib_emg=False):
         bool: is True when EMG threshold is reached and feedback should be
         activated.
     """
-    if (data_frame[EXTEND] > 0.1) or (data_frame[FLEX] > 0.1):
+    if (data_frame[EXTEND] > 0.1) | (data_frame[FLEX] > 0.1):
         vib_emg = True
     return vib_emg
 
@@ -105,7 +94,7 @@ def define_dominant_muscle(data_frame):
     for i, t in enumerate(thresholds[:-1]):
         if t < dominant_muscle < thresholds[i + 1]:
             level = LEVELS[i]
-    print(dominant_muscle)
+    # print(dominant_muscle)
     return level
 
 
@@ -126,7 +115,7 @@ def define_level(data_frame):
     thresholds = [0.0, 0.1, 0.2, 0.4, 0.65, 1]  # levels 0-4 from Tchimino '22
     level_extend = None
     level_flex = None
-    print(data_frame[[EXTEND, FLEX]])
+    # print(data_frame[[EXTEND, FLEX]])
     for i, t in enumerate(thresholds[:-1]):
         if t < data_frame[EXTEND] < thresholds[i + 1]:
             level_extend = i
@@ -140,6 +129,11 @@ def define_level(data_frame):
 if __name__ == "__main__":
     vib_emg = False
     level = None
+    columns = [
+        'timestamp',
+        'BASE_ACTIVITY', 'BASE_GAIT_PHASE',
+        'BSMB_MUSCLE_EXTEND', 'BSMB_MUSCLE_FLEX']
+    temp = pd.DataFrame(columns=columns)
 
     folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/EMG_data/"
     # data_file = "20230111151536909_210000.8.Variables.csv"
@@ -147,23 +141,23 @@ if __name__ == "__main__":
     # data_file = "signal check sitting.csv"
     # data_file = "stairs prev settings.csv"
     data = extract_data(folder + data_file)
-    print(data.head())
 
     # select columns to process
-    data = data[['timestamp', 'BASE_ACTIVITY', 'BASE_GAIT_PHASE',
-                 'BSMB_MUSCLE_EXTEND', 'BSMB_MUSCLE_FLEX']]
-    print(data)
-    print(data.min())
-    print(data.max())
+    data = data[columns]
+    print(data.head())
 
-    # TODO subtract 'rest' activity
-    normal = normalise_data(data)
-    print(normal)
+    for i, row in data.iterrows():  # loop through data as if live data
+        row = row.to_frame().T
+        temp = pd.concat([temp, row], ignore_index=True)
+        if len(temp) > 100:  # take out first line
+            temp.drop(axis=0, index=0, inplace=True)
 
-    vib_emg = threshold_reached(normal.iloc[0])
+        # TODO subtract 'rest' activity
+        normal = normalise_data(temp)
+        vib_emg = threshold_reached(normal)
 
-    if vib_emg:
-        level = define_level(normal.iloc[0])
-        print(level)
-        level = define_dominant_muscle(normal.iloc[0])
-        print(level)
+        if vib_emg:
+            level = define_level(normal)
+            # print(level)
+            level = define_dominant_muscle(normal)
+            # print(level)
