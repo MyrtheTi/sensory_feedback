@@ -5,16 +5,22 @@
  * @desc Script with utility functions and predefined parameters.
 """
 
-import board
-import digitalio
-import pandas as pd
+try:
+    import board
+    import digitalio
 
-VIB_PIN_LIST = [
-    {"LEVEL": 0, "PIN": board.D7, "PREV_TIME": -1},
-    {"LEVEL": 1, "PIN": board.D8, "PREV_TIME": -1},
-    {"LEVEL": 2, "PIN": board.D9, "PREV_TIME": -1},
-    {"LEVEL": 3, "PIN": board.D10, "PREV_TIME": -1}
-]  # TODO add the other vibrating motors to this list
+    VIB_PIN_LIST = [
+        {"LEVEL": -1, "PIN": board.D6, "PREV_TIME": -1},
+        {"LEVEL": 0, "PIN": board.D7, "PREV_TIME": -1},
+        {"LEVEL": 1, "PIN": board.D8, "PREV_TIME": -1},
+        {"LEVEL": 2, "PIN": board.D9, "PREV_TIME": -1},
+        {"LEVEL": 3, "PIN": board.D10, "PREV_TIME": -1}
+    ]  # TODO add the other vibrating motors to this list
+except ModuleNotFoundError:
+    print('This code is not run with CircuitPython')
+    pass
+
+import pandas as pd  # TODO change into something that works on CircuitPython
 
 VIBRATION_TIME = 0.004  # seconds  TODO read from file after calibration
 MIN_OFF_TIME = 0.100  # seconds
