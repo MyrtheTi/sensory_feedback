@@ -10,17 +10,36 @@ try:
     import digitalio
 
     VIB_PIN_LIST = [
-        {"LEVEL": -1, "PIN": board.D6, "PREV_TIME": -1},
-        {"LEVEL": 0, "PIN": board.D7, "PREV_TIME": -1},
-        {"LEVEL": 1, "PIN": board.D8, "PREV_TIME": -1},
-        {"LEVEL": 2, "PIN": board.D9, "PREV_TIME": -1},
-        {"LEVEL": 3, "PIN": board.D10, "PREV_TIME": -1}
-    ]  # TODO add the other vibrating motors to this list
+        {"PIN": board.D0},
+        {"PIN": board.D1},
+        {"PIN": board.D2},
+        {"PIN": board.D3},
+        {"PIN": board.D4},
+        {"PIN": board.D5},
+        {"PIN": board.D6}
+    ]
 except ModuleNotFoundError:
     print('This code is not run with CircuitPython')
     pass
 
-import pandas as pd  # TODO change into something that works on CircuitPython
+try:
+    import pandas as pd  # TODO change into something that works on CircuitPython
+    MVC = pd.read_csv('emg_files/MVC.csv')  # pick for the correct subject?
+except ImportError:
+    print('This code is run with CircuitPython')
+    pass
+
+LEVEL_LIST = [
+    {"LEVEL": -4, "PIN": [4, 5, 6], "PREV_TIME": -1, "VIBRATION_TIME": -1},
+    {"LEVEL": -3, "PIN": [6], "PREV_TIME": -1, "VIBRATION_TIME": -1},
+    {"LEVEL": -2, "PIN": [5], "PREV_TIME": -1, "VIBRATION_TIME": -1},
+    {"LEVEL": -1, "PIN": [4], "PREV_TIME": -1, "VIBRATION_TIME": -1},
+    {"LEVEL": 0, "PIN": [3], "PREV_TIME": -1, "VIBRATION_TIME": -1},
+    {"LEVEL": 1, "PIN": [2], "PREV_TIME": -1, "VIBRATION_TIME": -1},
+    {"LEVEL": 2, "PIN": [1], "PREV_TIME": -1, "VIBRATION_TIME": -1},
+    {"LEVEL": 3, "PIN": [0], "PREV_TIME": -1, "VIBRATION_TIME": -1},
+    {"LEVEL": 4, "PIN": [2, 1, 0], "PREV_TIME": -1, "VIBRATION_TIME": -1}
+    ]  # when cables down on left leg
 
 VIBRATION_TIME = 0.004  # seconds  TODO read from file after calibration
 MIN_OFF_TIME = 0.100  # seconds
@@ -29,7 +48,6 @@ MAX_OFF_TIME = 1.000  # seconds
 EXTEND = 'BSMB_MUSCLE_EXTEND'
 FLEX = 'BSMB_MUSCLE_FLEX'
 LEVELS = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
-MVC = pd.read_csv('emg_files/MVC.csv')  # pick for the correct subject?
 
 
 def initiate_pin_output(vibrator_list):
