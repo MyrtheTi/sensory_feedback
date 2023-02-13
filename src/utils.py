@@ -22,13 +22,6 @@ except ModuleNotFoundError:
     print('This code is not run with CircuitPython')
     pass
 
-try:
-    import pandas as pd  # TODO change into something that works on CircuitPython
-    MVC = pd.read_csv('emg_files/MVC.csv')  # pick for the correct subject?
-except ImportError:
-    print('This code is run with CircuitPython')
-    pass
-
 LEVEL_LIST = [
     {"LEVEL": -4, "PIN": [4, 5, 6], "PREV_TIME": -1, "VIBRATION_TIME": -1},
     {"LEVEL": -3, "PIN": [6], "PREV_TIME": -1, "VIBRATION_TIME": -1},
@@ -45,8 +38,6 @@ VIBRATION_TIME = 0.004  # seconds  TODO read from file after calibration
 MIN_OFF_TIME = 0.100  # seconds
 MAX_OFF_TIME = 1.000  # seconds
 
-EXTEND = 'BSMB_MUSCLE_EXTEND'
-FLEX = 'BSMB_MUSCLE_FLEX'
 LEVELS = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
 
 
@@ -70,3 +61,39 @@ def motor_on(vibrator, on=False):
         on (bool, optional): Sets the pin value. Defaults to False (Off).
     """
     vibrator["PIN"].value = on
+
+
+def get_MVC(file_name):
+    """Opens file with maximum voluntary contraction (mvc) values of the user.
+    Reads the file and returns the mvc values as a list of integers in the
+    same order as the uart data.
+
+    Args:
+        file_name (_type_): csv or text file with mvc data, first line is headers
+
+    Returns:
+        list: integers of mvc in the order [flex, extend]
+    """
+    with open(file_name, 'r') as file:
+        lines = file.read().splitlines()
+
+    names = lines[0].split(',')
+
+    extend = 1  # order of uart data
+    flex = 0
+
+    emg = lines[1].split(',')
+
+    emg_0 = int(float(emg[0]))  # convert to int
+    emg_1 = int(float(emg[1]))
+
+    if 'EXTEND' in names[0]:  # if first column is extend emg
+        emg_extend = emg_0
+        emg_flex = emg_1
+    else:
+        emg_extend = emg_1
+        emg_flex = emg_0
+
+    mvc = {names[0]: emg_0, names[1]: emg_1,
+           flex: emg_flex, extend: emg_extend}
+    return mvc

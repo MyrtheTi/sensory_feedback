@@ -4,14 +4,18 @@
  * @create date 2023-02-12 16:52:16
  * @desc script to read serial uart EMG data from Panda
 """
-
+import gc
 import struct
 
 import board
 import busio
 
 from preprocessing import normalise_data_MVC, define_dominant_muscle
+from utils import get_MVC
 
+gc.collect()
+start_mem = gc.mem_free()
+print('start memory', start_mem)
 
 uart = busio.UART(board.TX, board.RX, baudrate=921600)  # 1000000)
 
@@ -26,11 +30,17 @@ if data_num_bytes == 2:
 elif data_num_bytes == 4:
     data_type = 'f'     # 4 byte float
 
+mvc = get_MVC('MVC.csv')
+
 x = 0
 
 extend = 1
 flex = 0
 
+gc.collect()
+intialised_mem = gc.mem_free()
+print('initialised memory', intialised_mem)
+print(mvc)
 
 while True:
     # emg_data = uart.read(14)  # read up to 32 bytes
@@ -52,13 +62,23 @@ while True:
                 for i in range(num_variables)]
 
     # convert bytes to int
-    emg_value = [struct.unpack(data_type, data)[0] for data in emg_data]  
-    level = define_dominant_muscle(emg_value, extend, flex)
-    # print(level)
+    emg_value = [struct.unpack(data_type, data)[0] for data in emg_data]
+    print(emg_value)
+    normal = normalise_data_MVC(emg_value, mvc, extend, flex)
+    print(normal)
+    level = define_dominant_muscle(normal, extend, flex)
+    print(level)
     all_data.append(emg_value)
     # print(emg_value)
 
-    if x == 500:  # stop
+    if x == 100:  # stop
         break
 
+    gc.collect()
+    # loop_mem = gc.mem_free()
+    # print('loop memory', x, loop_mem)
+
 print(all_data)
+gc.collect()
+end_mem = gc.mem_free()
+print('end memory', end_mem)

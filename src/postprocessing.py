@@ -10,6 +10,7 @@ import pandas as pd
 from preprocessing import (define_dominant_muscle, define_level,
                            normalise_data_MVC, normalise_data_RMS,
                            threshold_reached)
+from utils import get_MVC
 
 
 def extract_data(filename, verbose=True, comma=False):
@@ -50,15 +51,16 @@ if __name__ == "__main__":
 
     folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/EMG_data/"
     # data_file = "20230111151536909_210000.8.Variables.csv"
-    data_file = "ramp descend.csv"
+    # data_file = "ramp descend.csv"
     # data_file = "signal check sitting.csv"
-    # data_file = "stairs prev settings.csv"
+    data_file = "stairs prev settings.csv"
     data = extract_data(folder + data_file)
 
     # select columns to process
     data = data[columns]
     print(data.head())
-
+    mvc = get_MVC('emg_files/MVC.csv')
+    print(mvc)
     for _, row in data.iterrows():  # loop through data as if live data
         row = row.to_frame().T
         temp = pd.concat([temp, row], ignore_index=True)
@@ -66,10 +68,9 @@ if __name__ == "__main__":
             temp.drop(axis=0, index=0, inplace=True)
 
         # TODO subtract 'rest' activity
-        normal = normalise_data_MVC(row)
+        normal = normalise_data_MVC(row.iloc[0], mvc)
         print(normal)
         # normal = normalise_data_RMS(temp)
-        print(normal['BSMB_MUSCLE_EXTEND'])
         vib_emg = threshold_reached(normal)
 
         if vib_emg:

@@ -5,10 +5,10 @@
  * @desc Process EMG data from file: normalise and define activation level
 """
 
-from utils import LEVELS, MVC
+from utils import LEVELS
 
 
-def normalise_data_RMS(data_frame, extend='BSMB_MUSCLE_EXTEND',
+def normalise_data_RMS(data_frame, mvc, extend='BSMB_MUSCLE_EXTEND',
                        flex='BSMB_MUSCLE_FLEX'):
     """
     Take the root mean square and normalises data according to 40% of the
@@ -24,14 +24,14 @@ def normalise_data_RMS(data_frame, extend='BSMB_MUSCLE_EXTEND',
     RMS_window = data_frame[[extend, flex]]
 
     square = RMS_window.pow(2)
-    rms = square.mean(axis=0).pow(0.5) / (0.4 * MVC)
+    rms = square.mean(axis=0).pow(0.5) / (0.4 * mvc)
 
     normalised[extend] = rms[extend]
     normalised[flex] = rms[flex]
     return normalised
 
 
-def normalise_data_MVC(data_frame, extend='BSMB_MUSCLE_EXTEND',
+def normalise_data_MVC(data_frame, mvc, extend='BSMB_MUSCLE_EXTEND',
                        flex='BSMB_MUSCLE_FLEX'):
     """
     Normalises data according to 40% of the maximum voluntary contraction (MVC)
@@ -42,11 +42,11 @@ def normalise_data_MVC(data_frame, extend='BSMB_MUSCLE_EXTEND',
     Returns:
         data frame: with 1 row with the normalised EMG data
     """
-    normalised = data_frame.reset_index(drop=True)
+    normalised = data_frame
 
     for muscle in [extend, flex]:
-        emg_signal = data_frame[muscle].reset_index(drop=True)
-        normalised[muscle] = emg_signal / (0.4 * MVC[muscle])
+        emg_signal = data_frame[muscle]
+        normalised[muscle] = emg_signal / (0.4 * mvc[muscle])
 
     return normalised
 
@@ -127,6 +127,5 @@ def define_level(data_frame, extend='BSMB_MUSCLE_EXTEND',
         elif t <= data_frame[flex] < thresholds[i + 1]:
             level_flex = i
 
-    print(data_frame[extend], data_frame[flex])
     level = level_extend - level_flex
     return level
