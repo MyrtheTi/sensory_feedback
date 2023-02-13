@@ -1,71 +1,64 @@
+"""
+ * @author Myrthe Tilleman
+ * @email mtillerman@ossur.com
+ * @create date 2023-02-12 16:52:16
+ * @desc script to read serial uart EMG data from Panda
+"""
 
 import struct
-import sys
 
 import board
 import busio
+
+from preprocessing import normalise_data_MVC, define_dominant_muscle
+
 
 uart = busio.UART(board.TX, board.RX, baudrate=921600)  # 1000000)
 
 num_variables = 2  # EMG_Flex, EMG_Extend
 data_num_bytes = 2
 start_num_bytes = 8
-raw_data = bytearray(14)
+array_length = 14
+raw_data = bytearray(array_length)
 all_data = []
 if data_num_bytes == 2:
     data_type = 'h'     # 2 byte integer
 elif data_num_bytes == 4:
     data_type = 'f'     # 4 byte float
 
-for i in range(num_variables):   # give an array for each type of data and store them in a list
-    # first flex, then extent emg data
-    all_data.append([0])
-
 x = 0
+
+extend = 1
+flex = 0
+
 
 while True:
     # emg_data = uart.read(14)  # read up to 32 bytes
     # print(emg_data)  # this is a bytearray type
     uart.readinto(raw_data)
-    start_index = raw_data.find(b'\xaa\n\xb1')
-    private_data = raw_data[start_index:]  # should start with \xaa
+    start_index = raw_data.find(b'\xaa\n\xb1')  # find starting byte
+    private_data = raw_data[start_index:]
     # private_data = copy.deepcopy(raw_data[:])
-
+    read_next = uart.read(start_index)  # read extra bytes if necessary
+    private_data += bytearray(read_next)  # add extra bytes to make length 14
     # print(raw_data)
-
-    # while private_data[0] != 170:  # not the start bit
-    #    private_data = private_data[1:]
-
+    # print(read_next)
     # print(private_data)
 
-    if len(private_data) == 14 and private_data[0] == 170:  # correct length and starting bit
-    # if private_data.startswith(b'\xaa'):
-        x += 1
-        for i in range(num_variables):
-            # data = private_data[(4 + i * data_num_bytes):(data_num_bytes + 4+i*data_num_bytes)]
-            data = private_data[(8 + i * data_num_bytes):
-                                (data_num_bytes + 8 + i * data_num_bytes)]
+    x += 1
 
-            value,  = struct.unpack(data_type, data)  # unpacks and converts to int (same as int.from_bytes)
+    emg_data = [private_data[start_num_bytes + i * data_num_bytes:
+                start_num_bytes + data_num_bytes + i * data_num_bytes]
+                for i in range(num_variables)]
 
-            print(value)
-            all_data[i].append(value)  # we get the latest data point and append it to our array
+    # convert bytes to int
+    emg_value = [struct.unpack(data_type, data)[0] for data in emg_data]  
+    level = define_dominant_muscle(emg_value, extend, flex)
+    # print(level)
+    all_data.append(emg_value)
+    # print(emg_value)
 
-        # emg_data = [private_data[start_num_bytes + i * data_num_bytes:
-        #             start_num_bytes + data_num_bytes + i * data_num_bytes] for i in range(num_variables)]
-        # emg_value = [struct.unpack(data_type, data) for data in emg_data]
-        # print(emg_value)
-    # if data is not None:
-        # if first byte is not AA, check next
-        # emg_1 = private_data[8:10]
-        # emg_2 = private_data[10:12]
-
-        # int_values = int.from_bytes(emg_1, "little")
-        # int_values_2 = int.from_bytes(emg_2, "little")
-
-        # print(int_values, int_values_2)
-
-    if x == 100:  # stop
+    if x == 500:  # stop
         break
 
 print(all_data)
