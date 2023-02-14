@@ -10,8 +10,7 @@ import struct
 import board
 import busio
 
-from preprocessing import define_dominant_muscle, normalise_data_MVC
-from utils import get_MVC
+from preprocessing import PreprocessEMG
 
 
 class ReadUart():
@@ -81,28 +80,25 @@ if __name__ == '__main__':
 
     read_uart = ReadUart()
     read_uart.initialise_uart()
-    mvc = get_MVC('MVC.csv')
+
+    process_EMG = PreprocessEMG('MVC.csv', extend=1, flex=0)
+    process_EMG.get_MVC()
 
     x = 0
 
-    extend = 1
-    flex = 0
-
     gc.collect()
-    intialised_mem = gc.mem_free()
-    print('initialised memory', intialised_mem)
-    print(mvc)
+    initialised_mem = gc.mem_free()
+    print('initialised memory', initialised_mem)
 
     while True:
+        x += 1
         data = read_uart.get_serial_data()
         emg_value = read_uart.extract_emg_data(data)
 
-        x += 1
-
+        normal = process_EMG.normalise_data_MVC(emg_value)
+        level = process_EMG.define_dominant_muscle(normal)
         print(emg_value)
-        normal = normalise_data_MVC(emg_value, mvc, extend, flex)
         print(normal)
-        level = define_dominant_muscle(normal, extend, flex)
         print(level)
 
         if x == 100:  # stop
