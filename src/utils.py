@@ -16,7 +16,7 @@ try:
         {"PIN": board.D3},
         {"PIN": board.D4},
         {"PIN": board.D5},
-        {"PIN": board.D6}
+        {"PIN": board.D8}
     ]
 except ModuleNotFoundError:
     print('This code is not run with CircuitPython')
