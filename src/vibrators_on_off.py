@@ -7,7 +7,7 @@
 
 import time
 
-from utils import VIB_PIN_LIST, initiate_pin_output, motor_on
+from utils import VIB_PIN_LIST, initiate_pin_output, motor_on, LEVEL_LIST
 
 
 def vibration_frequency(vibrator, time_on, time_off=0.0):
@@ -28,16 +28,33 @@ def vibration_frequency(vibrator, time_on, time_off=0.0):
 if __name__ == '__main__':
 
     initiate_pin_output(VIB_PIN_LIST)
+    off_time = 0.1
+    on_time = 0.004  # s on
 
     for vibrator in VIB_PIN_LIST:
         motor_on(vibrator)
 
-    for vibrator in VIB_PIN_LIST:  # test motors one by one
-        # test sensory threshold; feel 'haptic' short feedback from ~3ms
-        for i in range(0, 10):
-            on_time = i / 1000  # s on
-            print(on_time, 's')
-            vibration_frequency(vibrator["PIN"], on_time, 2)
+    for vibrator_level in LEVEL_LIST:  # loop through levels
+        pins = vibrator_level["PIN"]
+        print('level', vibrator_level["LEVEL"])
 
-    for vibrator in VIB_PIN_LIST:
-        motor_on(vibrator)
+        start = time.monotonic()
+        while time.monotonic() - start < 5:  # vibrate each level for 5 seconds
+            now = time.monotonic()
+            for i, pin in enumerate(pins):
+                if VIB_PIN_LIST[pin]["PIN"].value is False:
+
+                    # check whether it is time to turn on
+                    if now >= vibrator_level["PREV_TIME"][i] + off_time:
+                        vibrator_level["PREV_TIME"][i] = now
+                        motor_on(VIB_PIN_LIST[pin], True)
+
+                if VIB_PIN_LIST[pin]["PIN"].value is True:
+
+                    # check whether it is time to turn off
+                    if now >= vibrator_level["PREV_TIME"][i] + on_time:
+                        vibrator_level["PREV_TIME"][i] = now
+                        motor_on(VIB_PIN_LIST[pin], False)
+
+        for vibrator in VIB_PIN_LIST:  # turn all motors off
+            motor_on(vibrator)

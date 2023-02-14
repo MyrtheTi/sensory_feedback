@@ -59,20 +59,20 @@ if __name__ == '__main__':
 
             pins = vibrator_level["PIN"]
             if vib_emg & (level == vibrator_level["LEVEL"]):  # pin to activate
-                for pin in pins:
+                for i, pin in enumerate(pins):
                     if VIB_PIN_LIST[pin]["PIN"].value is False:
 
                         # check whether it is time to turn on
-                        if now >= vibrator_level["PREV_TIME"] + off_time:
-                            vibrator_level["PREV_TIME"] = now
+                        if now >= vibrator_level["PREV_TIME"][i] + off_time:
+                            vibrator_level["PREV_TIME"][i] = now
                             motor_on(VIB_PIN_LIST[pin], True)
                             vib_count += 1
 
                     if VIB_PIN_LIST[pin]["PIN"].value is True:
 
                         # check whether it is time to turn off
-                        if now >= vibrator_level["PREV_TIME"] + VIBRATION_TIME:
-                            vibrator_level["PREV_TIME"] = now
+                        if now >= vibrator_level["PREV_TIME"][i] + VIBRATION_TIME:
+                            vibrator_level["PREV_TIME"][i] = now
                             motor_on(VIB_PIN_LIST[pin], False)
             else:  # turn off
                 for pin in pins:

@@ -23,15 +23,15 @@ except ModuleNotFoundError:
     pass
 
 LEVEL_LIST = [
-    {"LEVEL": -4, "PIN": [4, 5, 6], "PREV_TIME": -1, "VIBRATION_TIME": -1},
-    {"LEVEL": -3, "PIN": [6], "PREV_TIME": -1, "VIBRATION_TIME": -1},
-    {"LEVEL": -2, "PIN": [5], "PREV_TIME": -1, "VIBRATION_TIME": -1},
-    {"LEVEL": -1, "PIN": [4], "PREV_TIME": -1, "VIBRATION_TIME": -1},
-    {"LEVEL": 0, "PIN": [3], "PREV_TIME": -1, "VIBRATION_TIME": -1},
-    {"LEVEL": 1, "PIN": [2], "PREV_TIME": -1, "VIBRATION_TIME": -1},
-    {"LEVEL": 2, "PIN": [1], "PREV_TIME": -1, "VIBRATION_TIME": -1},
-    {"LEVEL": 3, "PIN": [0], "PREV_TIME": -1, "VIBRATION_TIME": -1},
-    {"LEVEL": 4, "PIN": [2, 1, 0], "PREV_TIME": -1, "VIBRATION_TIME": -1}
+    {"LEVEL": -4, "PIN": [4, 5, 6], "PREV_TIME": [-1, -1, -1], "VIBRATION_TIME": -1},
+    {"LEVEL": -3, "PIN": [6], "PREV_TIME": [-1], "VIBRATION_TIME": -1},
+    {"LEVEL": -2, "PIN": [5], "PREV_TIME": [-1], "VIBRATION_TIME": -1},
+    {"LEVEL": -1, "PIN": [4], "PREV_TIME": [-1], "VIBRATION_TIME": -1},
+    {"LEVEL": 0, "PIN": [3], "PREV_TIME": [-1], "VIBRATION_TIME": -1},
+    {"LEVEL": 1, "PIN": [2], "PREV_TIME": [-1], "VIBRATION_TIME": -1},
+    {"LEVEL": 2, "PIN": [1], "PREV_TIME": [-1], "VIBRATION_TIME": -1},
+    {"LEVEL": 3, "PIN": [0], "PREV_TIME": [-1], "VIBRATION_TIME": -1},
+    {"LEVEL": 4, "PIN": [2, 1, 0], "PREV_TIME": [-1, -1, -1], "VIBRATION_TIME": -1}
     ]  # when cables down on left leg
 
 VIBRATION_TIME = 0.004  # seconds  TODO read from file after calibration
