@@ -2,7 +2,8 @@
  * @author Myrthe Tilleman
  * @email mtillerman@ossur.com
  * @create date 2023-02-22 11:33:31
- * @desc [description]
+ * @desc Class for activating the vibration motors to deliver the sensory
+ feedback according to predefined levels.
 """
 
 import time
@@ -30,6 +31,10 @@ class ActivateVibrationMotor():
         self.left_leg = left_leg
         self.min_off_time = 0.100  # seconds
         self.max_off_time = 1.000  # seconds
+        self.off_time = self.min_off_time
+
+        self.vib_count = 0  # counts the times a motor is turned on
+        self.prev_level = None
         self.vibration_time = 0.004  # seconds
 
     def initiate_pin_output(self):
@@ -50,7 +55,7 @@ class ActivateVibrationMotor():
         for level_conf in self.level_list:
             # level = level_conf["LEVEL"]
             level_conf["PIN"] = [self.pins[i] for i in level_conf["PIN"]]
-            level_conf["VIBRATION_TIME"] = self.vibration_time * abs(level_conf["LEVEL"])
+            level_conf["VIBRATION_TIME"] = self.vibration_time
 
     def set_motor_value(self, vibrator_level, value=False):
         """ Turns on or off the vibrating motor by setting the pin value to
@@ -75,15 +80,38 @@ class ActivateVibrationMotor():
 
         if all(pin_value) is False:
             # check whether it is time to turn on
-            if now >= level["PREV_TIME"] + self.min_off_time:
+            if now >= level["PREV_TIME"] + self.off_time:
                 level["PREV_TIME"] = now
                 self.set_motor_value(level, True)
+                self.vib_count += 1
 
         else:   # pin_value is True
             # check whether it is time to turn off
             if now >= level["PREV_TIME"] + level["VIBRATION_TIME"]:
                 level["PREV_TIME"] = now
                 self.set_motor_value(level, False)
+
+    def adjust_off_time(self, level):
+        """ Adjusts time the vibrators are turned off. If the level is the
+        same, the motors are vibrating with a longer interval. If the level
+        changes, the motors are vibrating faster again.
+
+        Args:
+            level (int): Defines current level.
+        """
+        if level != self.prev_level:
+            # increase frequency if EMG activation changes
+            self.off_time = self.min_off_time
+            self.vib_count = 0
+            self.prev_count = 0
+            self.prev_level = level
+        else:
+            if self.prev_count != self.vib_count:
+                # decrease frequency if the EMG activation is the same
+                self.off_time += 0.100
+                self.prev_count += 1
+                if self.off_time > self.max_off_time:
+                    self.off_time = self.max_off_time
 
 
 if __name__ == "__main__":

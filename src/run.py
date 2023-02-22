@@ -7,17 +7,15 @@
 
 import time
 
+from activate_vibration_motors import ActivateVibrationMotor
 from preprocessing import PreprocessEMG
 from read_uart import ReadUart
-from utils import (LEVEL_LIST, MAX_OFF_TIME, MIN_OFF_TIME, VIB_PIN_LIST,
-                   VIBRATION_TIME, initiate_pin_output, motor_on)
 
 if __name__ == '__main__':
-    initiate_pin_output(VIB_PIN_LIST)
-    level = 0  # TODO relate to EMG signals
-    prev_level = None
-    vib_count = 0  # counts the times a motor is turned on sequentially
-    prev_count = 0
+    motors = ActivateVibrationMotor()
+    motors.initiate_pin_output()
+    motors.configure_levels()
+
     vib_emg = False
 
     read_uart = ReadUart()
@@ -36,44 +34,16 @@ if __name__ == '__main__':
 
         if vib_emg:
             level = process_EMG.define_dominant_muscle(normal)
-            if level != prev_level:
-                # increase frequency if EMG activation changes
-                off_time = MIN_OFF_TIME
-                vib_count = 0
-                prev_count = 0
-                prev_level = level
-            else:
-                if prev_count != vib_count:
-                    # decrease frequency if the EMG activation is the same
-                    off_time += 0.100
-                    prev_count += 1
-                    if off_time > MAX_OFF_TIME:
-                        off_time = MAX_OFF_TIME
+            motors.adjust_off_time(level)
         else:
-            vib_count = 0
-            prev_count = 0
-            prev_level = None
+            motors.vib_count = 0
+            motors.prev_count = 0
+            motors.prev_level = None
 
         print('level', level)
-        for vibrator_level in LEVEL_LIST:
+        for vibrator_level in motors.level_list:
 
-            pins = vibrator_level["PIN"]
             if vib_emg & (level == vibrator_level["LEVEL"]):  # pin to activate
-                for i, pin in enumerate(pins):
-                    if VIB_PIN_LIST[pin]["PIN"].value is False:
-
-                        # check whether it is time to turn on
-                        if now >= vibrator_level["PREV_TIME"][i] + off_time:
-                            vibrator_level["PREV_TIME"][i] = now
-                            motor_on(VIB_PIN_LIST[pin], True)
-                            vib_count += 1
-
-                    if VIB_PIN_LIST[pin]["PIN"].value is True:
-
-                        # check whether it is time to turn off
-                        if now >= vibrator_level["PREV_TIME"][i] + VIBRATION_TIME:
-                            vibrator_level["PREV_TIME"][i] = now
-                            motor_on(VIB_PIN_LIST[pin], False)
+                motors.check_time_to_change(vibrator_level, now)
             else:  # turn off
-                for pin in pins:
-                    motor_on(VIB_PIN_LIST[pin], False)
+                motors.set_motor_value(vibrator_level, False)
