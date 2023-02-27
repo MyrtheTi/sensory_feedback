@@ -2,7 +2,8 @@
  * @author Myrthe Tilleman
  * @email mtillerman@ossur.com
  * @create date 2023-01-16 13:46:52
- * @desc [description]
+ * @desc Class and script for calculating the mvc and average rest activity in
+ both flexor and extensor muscles. Then saves these values in a file.
 """
 
 
@@ -17,10 +18,12 @@ from postprocessing import extract_data
 
 
 class EmgCalibration():
-    def __init__(self, user, sampling_rate=100):
-        self.folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/Scripts/sensory_feedback/emg_files/"
+    def __init__(self, user, date, sampling_rate=100):
+        self.folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/" \
+                      "Scripts/sensory_feedback/emg_files/"
         self.user = user
-        self.path = self.folder + self.user + '/'
+        self.date = date
+        self.path = self.folder + self.user + '/' + self.date + '/'
 
         self.rest_file = "rest.csv"
         self.flex_file = "flex.csv"
@@ -68,28 +71,62 @@ class EmgCalibration():
         Each muscle is contracted maximally for 5 s, 3 times with rest in
         between. The mean is taken over these 5 seconds and the average of
         these 3 values is taken as the mvc for each muscle.
+        Checks whether there are already saved start/end positions for each
+        muscle. If there are saved values, asks whether these are okay.
+        Otherwise, new values will be selected.
         The values are then saved in a file.
         """
-        # TODO check whether there are already times saved, display and ask if it needs to be redone
-        start_flex, end_flex = self.extract_contraction_times(self.flex_data)
-        avg_flex = self.select_data(self.flex_data, start_flex, end_flex)
+        try:
+            positions_flex = pd.read_csv(
+                self.path + 'mvc_positions_flexion.csv')
+            start_flex = positions_flex.start.to_list()
+            end_flex = positions_flex.end.to_list()
+            self.visualise_data(
+                self.flex_data, 'flexion', start_flex, end_flex)
+            user_input = input(
+                "Are you happy with the start and end positions?\n"
+                "Press y when happy."
+                "Press any other key when you want to reset the boundaries.\n")
+            if user_input != 'y':
+                start_flex, end_flex = self.extract_contraction_times(
+                    self.flex_data, 'flexion')
+        except FileNotFoundError:
+            start_flex, end_flex = self.extract_contraction_times(
+                self.flex_data, 'flexion')
 
-        start_extend, end_extend = self.extract_contraction_times(
-            self.extend_data)
+        try:
+            positions_extend = pd.read_csv(
+                self.path + 'mvc_positions_extension.csv')
+            start_extend = positions_extend.start.to_list()
+            end_extend = positions_extend.end.to_list()
+            self.visualise_data(
+                self.extend_data, 'extension', start_extend, end_extend)
+            user_input = input(
+                "Are you happy with the start and end positions?\n"
+                "Press y when happy."
+                "Press any other key when you want to reset the boundaries.\n")
+            if user_input != 'y':
+                start_extend, end_extend = self.extract_contraction_times(
+                    self.extend_data, 'extension')
+        except FileNotFoundError:
+            start_extend, end_extend = self.extract_contraction_times(
+                self.extend_data, 'extension')
+
+        avg_flex = self.select_data(self.flex_data, start_flex, end_flex)
         avg_extend = self.select_data(
             self.extend_data, start_extend, end_extend)
 
         mvc_flex = avg_flex.mean()
         mvc_extend = avg_extend.mean()
-        print(mvc_flex, mvc_extend)
 
         mvc = pd.DataFrame({self.extend: [mvc_extend[self.extend]],
                             self.flex: [mvc_flex[self.flex]]})
         mvc.to_csv(self.path + 'mvc.csv', index=False)
 
-    def extract_contraction_times(self, data_frame):
+    def extract_contraction_times(self, data_frame, muscle):
         """ Plots data and mark with cursor when contraction starts and ends.
-        Saves starting and ending points in a list and sorts these.
+        Saves starting and ending points in a list and sorts these. Then saves
+        the values in a file.
 
         Args:
             data_frame (data frame): data frame of recording
@@ -100,9 +137,11 @@ class EmgCalibration():
         fig, ax = plt.subplots(constrained_layout=True)
 
         data_frame.plot(
-            kind='line', x='timestamp', y=self.extend, color='blue', ax=ax)
+            kind='line', x='timestamp', y=self.extend, color='red', ax=ax)
         data_frame.plot(
             kind='line', x='timestamp', y=self.flex, color='green', ax=ax)
+
+        plt.title('EMG activity over time during %s' % muscle)
 
         zoom_factory(ax)
         panhandler(fig, button=2)
@@ -114,7 +153,9 @@ class EmgCalibration():
 
         start.sort()  # order based on timestamp
         end.sort()
-        # TODO save these in file
+        positions = pd.DataFrame({"start": start, "end": end})
+        positions.to_csv(self.path + 'mvc_positions_%s.csv' % muscle,
+                         index=False)
         return start, end
 
     def select_data(self, data_frame, start, end):
@@ -148,7 +189,8 @@ class EmgCalibration():
 
         return avg_contraction
 
-    def visualise_data(self, data_frame):
+    def visualise_data(self, data_frame, activity, start_markers=None,
+                       end_markers=None):
         """ Visualise recorded data in plot over time.
 
         Args:
@@ -156,22 +198,29 @@ class EmgCalibration():
         """
         ax = plt.gca()
         data_frame.plot(
-            kind='line', x='timestamp', y=self.extend, color='blue', ax=ax)
+            kind='line', x='timestamp', y=self.extend, color='red', ax=ax)
         data_frame.plot(
             kind='line', x='timestamp', y=self.flex, color='green', ax=ax)
+
+        if start_markers:
+            for x_coordinates in start_markers:
+                plt.axvline(x_coordinates, color='blue')
+        if end_markers:
+            for x_coordinates in end_markers:
+                plt.axvline(x_coordinates, color='orange')
+
         plt.grid()
-        plt.title('EMG activity over time')
+        plt.title('EMG activity over timed during %s' % activity)
         plt.show()
 
 
 if __name__ == "__main__":
     user = "me"
+    date = '2023_02_24'
     sampling_rate = 10
 
-    emg = EmgCalibration(user, sampling_rate)
+    emg = EmgCalibration(user, date, sampling_rate)
     emg.load_data()
     emg.calculate_rest_activity()
-    print(emg.flex_data.head())
-    # emg.visualise_data(emg.flex_data)
-    # emg.extract_contraction_times(emg.flex_data)
+    # emg.visualise_data(emg.flex_data, 'flexion')
     emg.calculate_MVC()
