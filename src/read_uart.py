@@ -81,8 +81,9 @@ if __name__ == '__main__':
     read_uart = ReadUart()
     read_uart.initialise_uart()
 
-    process_EMG = PreprocessEMG('MVC.csv', extend=1, flex=0)
-    process_EMG.get_MVC()
+    user = "me"
+    date = '2023_02_24'
+    process_EMG = PreprocessEMG(user, date, extend=1, flex=0)
 
     x = 0
 
@@ -94,10 +95,10 @@ if __name__ == '__main__':
         x += 1
         data = read_uart.get_serial_data()
         emg_value = read_uart.extract_emg_data(data)
+        print(emg_value)
 
         normal = process_EMG.normalise_data_MVC(emg_value)
         level = process_EMG.define_dominant_muscle(normal)
-        print(emg_value)
         print(normal)
         print(level)
 

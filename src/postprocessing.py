@@ -2,7 +2,7 @@
  * @author Myrthe Tilleman
  * @email mtillerman@ossur.com
  * @create date 2023-02-13 09:01:22
- * @desc [description]
+ * @desc Script for processing logged EMG data from a csv.
 """
 
 import pandas as pd
@@ -30,10 +30,8 @@ def extract_data(filename, verbose=True, comma=False):
     else:
         dec = '.'
     df = pd.read_csv(filename, delimiter=';', decimal=dec, header=0, quoting=3)
-    print(df)
     df = df.pivot(columns="variableType", values="numValue", index="timestamp")
     df = df.reset_index(level=0)
-
     return df
 
 
@@ -57,8 +55,12 @@ if __name__ == "__main__":
     data = data[columns]
     print(data.head())
 
-    process_EMG = PreprocessEMG('emg_files/MVC.csv')
-    process_EMG.get_MVC()
+    calibration_folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/" \
+                         "Scripts/sensory_feedback/emg_files/"
+    user = "me"
+    date = '2023_02_24'
+
+    process_EMG = PreprocessEMG(user, date, calibration_folder)
 
     for _, row in data.iterrows():  # loop through data as if live data
         row = row.to_frame().T

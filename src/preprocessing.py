@@ -7,28 +7,24 @@
 
 
 class PreprocessEMG():
-    def __init__(self, mvc_file, extend='BSMB_MUSCLE_EXTEND',
+    def __init__(self, user, date, folder='', extend='BSMB_MUSCLE_EXTEND',
                  flex='BSMB_MUSCLE_FLEX'):
-        self.mvc_file = mvc_file
+        self.folder = folder
+        self.user = user
+        self.date = date
+        self.path = self.folder + self.user + '/' + self.date + '/'
+
         self.extend = extend
         self.flex = flex
         self.levels = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
-        self.mvc = None
-        self.rest = None
+        self.get_MVC()
+        self.get_rest_activity()
 
-    def get_MVC(self):
-        """Opens file with maximum voluntary contraction (mvc) values of the user.
-        Reads the file and returns the mvc values as a list of integers in the
-        same order as the uart data.
-
-        Args:
-            file_name (string): csv or text file with mvc data,
-                                first line is headers
-
-        Returns:
-            list: integers of mvc in the order [flex, extend]
+    def get_rest_activity(self):
+        """ Opens file with the average rest activity in each muscle
+        and saves these values in a dict.
         """
-        with open(self.mvc_file, 'r') as file:
+        with open(self.path + 'rest_activity.csv', 'r') as file:
             lines = file.read().splitlines()
 
         names = lines[0].split(',')
@@ -38,8 +34,35 @@ class PreprocessEMG():
 
         emg = lines[1].split(',')
 
-        emg_0 = int(float(emg[0]))  # convert to int
-        emg_1 = int(float(emg[1]))
+        emg_0 = float(emg[0])  # convert to int
+        emg_1 = float(emg[1])
+
+        if 'EXTEND' in names[0]:  # if first column is extend emg
+            emg_extend = emg_0
+            emg_flex = emg_1
+        else:
+            emg_extend = emg_1
+            emg_flex = emg_0
+
+        self.rest = {names[0]: emg_0, names[1]: emg_1,
+                     flex: emg_flex, extend: emg_extend}
+
+    def get_MVC(self):
+        """ Opens file with maximum voluntary contraction (mvc) values of the
+        user. Reads the file and saves the mvc values in a dict.
+        """
+        with open(self.path + 'mvc.csv', 'r') as file:
+            lines = file.read().splitlines()
+
+        names = lines[0].split(',')
+
+        extend = 1  # order of uart data
+        flex = 0
+
+        emg = lines[1].split(',')
+
+        emg_0 = float(emg[0])  # convert to int
+        emg_1 = float(emg[1])
 
         if 'EXTEND' in names[0]:  # if first column is extend emg
             emg_extend = emg_0
@@ -76,6 +99,7 @@ class PreprocessEMG():
 
     def normalise_data_MVC(self, data):
         """
+        Subtracts the average rest activity from the data.
         Normalises data according to 40% of the maximum voluntary contraction
         (MVC)
 
@@ -86,9 +110,8 @@ class PreprocessEMG():
             data frame: with 1 row with the normalised EMG data
         """
         normalised = data
-
         for muscle in [self.extend, self.flex]:
-            emg_signal = data[muscle]
+            emg_signal = data[muscle] - self.rest[muscle]
             normalised[muscle] = emg_signal / (0.4 * self.mvc[muscle])
 
         return normalised

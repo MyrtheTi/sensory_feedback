@@ -21,8 +21,9 @@ if __name__ == '__main__':
     read_uart = ReadUart()
     read_uart.initialise_uart()
 
-    process_EMG = PreprocessEMG('MVC.csv', extend=1, flex=0)
-    process_EMG.get_MVC()
+    user = "me"
+    date = '2023_02_24'
+    process_EMG = PreprocessEMG(user, date, extend=1, flex=0)
 
     while True:  # infinite loop
         now = time.monotonic()
