@@ -13,7 +13,7 @@ import digitalio
 
 
 class ActivateVibrationMotor():
-    def __init__(self, left_leg=True):
+    def __init__(self, user, date, left_leg=True):
         self.pins = [board.D0, board.D1, board.D2, board.D3,
                      board.D4, board.D5, board.D8]  # level 3 to -3
         self.level_list = [
@@ -52,10 +52,11 @@ class ActivateVibrationMotor():
 
         self.vib_count = 0  # counts the times a motor is turned on
         self.prev_level = None
-        self.vibration_time = 0.004  # seconds
+
+        self.path = user + '/' + date + '/'
 
         self.initiate_pin_output()
-        self.configure_levels()
+        self.configure_pins()
 
     def initiate_pin_output(self):
         """ Initiate pins and set the direction to output.
@@ -65,17 +66,31 @@ class ActivateVibrationMotor():
             vibrator.direction = digitalio.Direction.OUTPUT
             self.pins[i] = vibrator
 
-    def configure_levels(self):
+    def configure_pins(self):
         """ Configures the pins for each level. If the right leg is used, the
         pins are reversed, so the cables can always be guided down the leg.
-        TODO retrieve the vibration time for each level from a file after calibration
         """
         if not self.left_leg:
             self.pins.reverse()
         for level_conf in self.level_list:
             # level = level_conf["LEVEL"]
             level_conf["PIN"] = [self.pins[i] for i in level_conf["PIN"]]
-            level_conf["VIBRATION_TIME"] = self.vibration_time
+
+    def get_perception_thresholds(self):
+        """ Opens file with perceptual thresholds, converts the numbers to
+         floats and saves them in a list.
+        """
+        with open(self.path + 'perceptual_thresholds.csv', 'r') as file:
+            lines = file.read()
+
+        names = lines.split(',')
+        self.thresholds = [float(t) for t in names]
+
+    def set_thresholds(self):
+        """ Configures the vibration time for each level.
+        """
+        for index, level_conf in enumerate(self.level_list):
+            level_conf["VIBRATION_TIME"] = self.thresholds[index]
 
     def set_motor_value(self, pin_list, value=False):
         """ Turns on or off the vibrating motor by setting the pin value to
@@ -135,7 +150,12 @@ class ActivateVibrationMotor():
 
 
 if __name__ == "__main__":
-    motors = ActivateVibrationMotor()
+    user = 'me'
+    date = '2023_03_02'  # make sure this folder exists
+
+    motors = ActivateVibrationMotor(user, date)
+    motors.get_perception_thresholds()
+    motors.set_thresholds()
 
     for vibrator_level in motors.level_list:  # loop through levels
         print('level', vibrator_level)

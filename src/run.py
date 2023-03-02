@@ -14,7 +14,6 @@ from read_uart import ReadUart
 
 if __name__ == '__main__':
     gc.collect()
-    motors = ActivateVibrationMotor()
 
     vib_emg = False
 
@@ -22,8 +21,14 @@ if __name__ == '__main__':
     read_uart.initialise_uart()
 
     user = "me"
-    date = '2023_02_24'
-    process_EMG = PreprocessEMG(user, date, extend=1, flex=0)
+    emg_calibration = '2023_02_24'
+    feedback_calibration = '2023_03_02'
+
+    motors = ActivateVibrationMotor(user, feedback_calibration)
+    motors.get_perception_thresholds()
+    motors.set_thresholds()
+
+    process_EMG = PreprocessEMG(user, emg_calibration, extend=1, flex=0)
     gc.collect()
 
     while True:  # infinite loop

@@ -31,10 +31,8 @@ def write_file(path, data):
         path (string): path and filename of file to write data to
         data (list): list of data to write in file
     """
-    with open(path, 'w') as file:
-        for item in data:
-            file.write('%s,' % item)
-        # file.write("%s" % ','.join(str(col) for col in avg_thresholds))
+    with open(path + 'perceptual_thresholds.csv', 'w') as file:
+        file.write("%s" % ','.join(str(col) for col in data))
 
 
 def calibration_loop(motors, vibrator_level):
@@ -77,13 +75,12 @@ def calibration_loop(motors, vibrator_level):
 
 
 if __name__ == '__main__':
-    motors = ActivateVibrationMotor()
-    thresholds = [[] for _ in motors.level_list]
-
     user = 'me'
-    date = '2023_03_01'  # make sure this folder exists
-    path = user + '/' + date + '/perceptual_thresholds.csv'
+    date = '2023_03_02'  # make sure this folder exists
     repeat = 5  # repeat the calibration 5 times
+
+    motors = ActivateVibrationMotor(user, date)
+    thresholds = [[] for _ in motors.level_list]
 
     for _ in range(repeat):
         for index, vibrator_level in enumerate(motors.level_list):
@@ -96,4 +93,4 @@ if __name__ == '__main__':
 
     avg_thresholds = [mean(t) for t in thresholds]
     print(avg_thresholds)
-    write_file(path, avg_thresholds)
+    write_file(motors.path, avg_thresholds)
