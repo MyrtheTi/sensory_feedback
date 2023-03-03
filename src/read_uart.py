@@ -59,7 +59,7 @@ class ReadUart():
             private_data (bytearray): byte array of array_length
 
         Returns:
-            _type_: _description_
+            list: emg data in ints for flex and extend muscle
         """
         emg_data = [
             private_data[self.start_num_bytes + i * self.data_num_bytes:
