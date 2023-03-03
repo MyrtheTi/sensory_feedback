@@ -148,6 +148,20 @@ class ActivateVibrationMotor():
                 if self.off_time > self.max_off_time:
                     self.off_time = self.max_off_time
 
+    def vibrate_motor(self, vibrator_level, duration=2):
+        """ Activate motor specified by vibrator_level for duration.
+
+        Args:
+            vibrator_level (dict): Level information
+            duration (int, optional): Time the motor should vibrate on and off.
+             Defaults to 2.
+        """
+        start = time.monotonic()
+        while time.monotonic() - start < duration:
+            now = time.monotonic()
+            self.check_time_to_change(vibrator_level, now)
+        self.set_motor_value(vibrator_level["PIN"], False)  # turn off
+
 
 if __name__ == "__main__":
     user = 'me'
@@ -160,10 +174,5 @@ if __name__ == "__main__":
     for vibrator_level in motors.level_list:  # loop through levels
         print('level', vibrator_level)
 
-        start = time.monotonic()
-        while time.monotonic() - start < 5:  # vibrate each level for 5 seconds
-            now = time.monotonic()
-            motors.check_time_to_change(vibrator_level, now)
-
-        motors.set_motor_value(vibrator_level["PIN"], False)  # turn off
+        motors.vibrate_motor(vibrator_level, 5)  # vibrate for 5 seconds
     print(motors.level_list)

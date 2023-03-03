@@ -59,11 +59,7 @@ def calibration_loop(motors, vibrator_level):
         print(vibration_time, 's')
         vibrator_level["VIBRATION_TIME"] = vibration_time
 
-        start = time.monotonic()
-        while time.monotonic() - start < 2:  # activate for 2 s
-            now = time.monotonic()
-            motors.check_time_to_change(vibrator_level, now)
-        motors.set_motor_value(vibrator_level["PIN"], False)  # turn off
+        motors.vibrate_motor(vibrator_level, 2)
 
         user_input = input(
             'Enter a key when the vibration had an intensity of 2/10\n')
