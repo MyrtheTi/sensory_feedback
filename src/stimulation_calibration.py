@@ -9,30 +9,7 @@
 import time
 
 from activate_vibration_motors import ActivateVibrationMotor
-
-
-def mean(data):
-    """ Calculate the mean of a list.
-
-    Args:
-        data (list): data to calculate mean from
-
-    Returns:
-        float: mean of data
-    """
-    avg = sum(data) / len(data)
-    return avg
-
-
-def write_file(path, data):
-    """ Writes data to a file.
-
-    Args:
-        path (string): path and filename of file to write data to
-        data (list): list of data to write in file
-    """
-    with open(path + 'perceptual_thresholds.csv', 'w') as file:
-        file.write("%s" % ','.join(str(col) for col in data))
+from utils import mean, write_file
 
 
 def calibration_loop(motors, vibrator_level):
@@ -89,4 +66,4 @@ if __name__ == '__main__':
 
     avg_thresholds = [mean(t) for t in thresholds]
     print(avg_thresholds)
-    write_file(motors.path, avg_thresholds)
+    write_file(motors.path, 'perceptual_thresholds.csv', avg_thresholds)

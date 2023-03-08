@@ -10,6 +10,7 @@ import random
 import time
 
 from activate_vibration_motors import ActivateVibrationMotor
+from utils import write_file
 
 
 def validation_loop(motors, validation=False, repeat=10):
@@ -24,6 +25,8 @@ def validation_loop(motors, validation=False, repeat=10):
     or more of the levels were identified correctly, the validation was deemed
     successful.
 
+    Try to save the true and predicted labels in csv files if write access is
+    given.
     Args:
         motors (class): instance from ActivateVibrationMotor
         validation (bool, optional): Defines whether it is a familiarisation or
@@ -38,7 +41,8 @@ def validation_loop(motors, validation=False, repeat=10):
 
     while stimulation_list:
         if len(stimulation_list) % len(motors.level_list) == 0:
-            print(len(stimulation_list) / len(motors.level_list), ' more rounds to go')
+            print(len(stimulation_list) / len(motors.level_list),
+                  ' more rounds to go')
         index = random.randrange(len(stimulation_list))
         stimulus = stimulation_list[index]
         stimulation_list.pop(index)
@@ -56,21 +60,31 @@ def validation_loop(motors, validation=False, repeat=10):
     print('You are finished!')
     if validation:
         calculate_accuracy(stimulated, user_answers)
+        try:
+            write_file(motors.path, 'true_labels.csv', stimulated)
+            write_file(motors.path, 'predicted_labels.csv', user_answers)
+        except OSError:
+            print('Could not save the data')
 
 
 def calculate_accuracy(stimulation_list, user_answers):
-    """ Calculates the accuracy of the user.
+    """ Calculates the accuracy of the user. Using a strictly (only the exact
+    level is regarded as correct) and loosely (direction needs to be correct,
+    e.g. flex, extend, co-contraction).
 
     Args:
         stimulation_list (list): True levels of the stimulus
         user_answers (list): Predicted levels of the stimulus by the user
     """
-    # TODO save values somewhere to make a confusion matrix or something similar
-    # TODO consider whether level needs to be exact or whether just extend/flex/co-contraction is enough
-    correct = sum(1 for x, y in zip(stimulation_list, user_answers) if x == y)
+    correct_strict = sum(1 for x, y in zip(stimulation_list, user_answers) if (
+        x == y))
+    correct_loose = sum(1 for x, y in zip(stimulation_list, user_answers) if (
+        (x == y) or (x < 0 and y < 0) or (x > 0 and y > 0)))
     total = len(stimulation_list)
-    accuracy = correct / total
-    print(f'The accuracy reached is {accuracy:0.2f}')
+    accuracy_strict = correct_strict / total
+    accuracy_loose = correct_loose / total
+    print(f'The strict accuracy reached is {accuracy_strict:0.2f} and \
+          the loose accuracy reached is {accuracy_loose:0.2f}.')
 
 
 if __name__ == '__main__':
@@ -80,6 +94,6 @@ if __name__ == '__main__':
     motors = ActivateVibrationMotor(user, date)
     motors.get_perception_thresholds()
     motors.set_thresholds()
-
-    validation_loop(motors, validation=False, repeat=2)  # familiarisation
+    input()
+    validation_loop(motors, validation=False, repeat=1)  # familiarisation
     validation_loop(motors, validation=True, repeat=2)
