@@ -31,7 +31,7 @@ def write_file(path, file_name, data):
         file.write("%s" % ','.join(str(col) for col in data))
 
 
-def read_file(path, file_name, data_type=None):
+def read_file(path, file_name, data_type=[None]):
     """ Opens a file and reads the lines. Then splits the entities by comma.
     If provided, it converts the data to a different type than strings.
 
@@ -41,15 +41,20 @@ def read_file(path, file_name, data_type=None):
         data_type (str, optional): Converts to this data type. Defaults to None
 
     Returns:
-        _type_: _description_
+        list: list of lists with data of each line from the file
     """
     with open(path + file_name, 'r') as file:
-        lines = file.read()
+        lines = file.read().splitlines()
 
-    data = lines.split(',')
+    data = []
+    for line, data_type in zip(lines, data_type):
+        split_line = line.split(',')
 
-    if data_type == 'int':
-        names = [int(t) for t in data]
-    elif data_type == 'float':
-        names = [float(t) for t in data]
-    return names
+        if data_type == 'int':
+            names = [int(t) for t in split_line]
+        elif data_type == 'float':
+            names = [float(t) for t in split_line]
+        else:
+            names = split_line
+        data.append(names)
+    return data

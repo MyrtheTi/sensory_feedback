@@ -18,8 +18,8 @@ def plot_confusion_matrix(path):
     Args:
         path (string): Path of the validation files.
     """
-    true_labels = read_file(path, 'true_labels.csv', 'int')
-    predicted_labels = read_file(path, 'predicted_labels.csv', 'int')
+    true_labels = read_file(path, 'true_labels.csv', ['int'])[0]
+    predicted_labels = read_file(path, 'predicted_labels.csv', ['int'])[0]
 
     fig, axes = plt.subplots(ncols=2, figsize=(20, 10))
     titles_options = [

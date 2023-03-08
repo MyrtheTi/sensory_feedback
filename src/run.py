@@ -25,7 +25,6 @@ if __name__ == '__main__':
     feedback_calibration = '2023_03_02'
 
     motors = ActivateVibrationMotor(user, feedback_calibration)
-    motors.get_perception_thresholds()
     motors.set_thresholds()
 
     process_EMG = PreprocessEMG(user, emg_calibration, extend=1, flex=0)

@@ -92,8 +92,7 @@ if __name__ == '__main__':
     date = '2023_03_02'
 
     motors = ActivateVibrationMotor(user, date)
-    motors.get_perception_thresholds()
     motors.set_thresholds()
-    input()
+    input('Press enter to start the familiarisation and validation')
     validation_loop(motors, validation=False, repeat=1)  # familiarisation
     validation_loop(motors, validation=True, repeat=2)

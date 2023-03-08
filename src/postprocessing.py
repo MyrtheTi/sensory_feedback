@@ -56,7 +56,7 @@ if __name__ == "__main__":
     print(data.head())
 
     calibration_folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/" \
-                         "Scripts/sensory_feedback/emg_files/"
+                         "Scripts/sensory_feedback/user_files/"
     user = "me"
     date = '2023_02_24'
 
@@ -68,7 +68,6 @@ if __name__ == "__main__":
         if len(temp) > 100:  # take out first line
             temp.drop(axis=0, index=0, inplace=True)
 
-        # TODO subtract 'rest' activity
         normal = process_EMG.normalise_data_MVC(row.iloc[0])
         print(normal)
         # normal = process_EMG.normalise_data_RMS(temp)

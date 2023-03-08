@@ -5,6 +5,8 @@
  * @desc Process EMG data from file: normalise and define activation level
 """
 
+from utils import read_file
+
 
 class PreprocessEMG():
     def __init__(self, user, date, folder='', extend='BSMB_MUSCLE_EXTEND',
@@ -17,62 +19,32 @@ class PreprocessEMG():
         self.extend = extend
         self.flex = flex
         self.levels = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
-        self.get_MVC()
-        self.get_rest_activity()
+        self.mvc = self.create_dict('mvc.csv')
+        self.rest = self.create_dict('rest_activity.csv')
 
-    def get_rest_activity(self):
-        """ Opens file with the average rest activity in each muscle
-        and saves these values in a dict.
+    def create_dict(self, file_name):
+        """ Loads file with calibration data and saves it in a dict.
+
+        Args:
+            file_name (string): file to load
+
+        Returns:
+            dict: dict with emg calibration data.
         """
-        with open(self.path + 'rest_activity.csv', 'r') as file:
-            lines = file.read().splitlines()
-
-        names = lines[0].split(',')
-
+        names, emg = read_file(self.path, file_name, [None, 'float'])
         extend = 1  # order of uart data
         flex = 0
 
-        emg = lines[1].split(',')
-
-        emg_0 = float(emg[0])  # convert to int
-        emg_1 = float(emg[1])
-
         if 'EXTEND' in names[0]:  # if first column is extend emg
-            emg_extend = emg_0
-            emg_flex = emg_1
+            emg_extend = emg[0]
+            emg_flex = emg[1]
         else:
-            emg_extend = emg_1
-            emg_flex = emg_0
+            emg_extend = emg[1]
+            emg_flex = emg[0]
 
-        self.rest = {names[0]: emg_0, names[1]: emg_1,
+        save_dict = {names[0]: emg[0], names[1]: emg[1],
                      flex: emg_flex, extend: emg_extend}
-
-    def get_MVC(self):
-        """ Opens file with maximum voluntary contraction (mvc) values of the
-        user. Reads the file and saves the mvc values in a dict.
-        """
-        with open(self.path + 'mvc.csv', 'r') as file:
-            lines = file.read().splitlines()
-
-        names = lines[0].split(',')
-
-        extend = 1  # order of uart data
-        flex = 0
-
-        emg = lines[1].split(',')
-
-        emg_0 = float(emg[0])  # convert to int
-        emg_1 = float(emg[1])
-
-        if 'EXTEND' in names[0]:  # if first column is extend emg
-            emg_extend = emg_0
-            emg_flex = emg_1
-        else:
-            emg_extend = emg_1
-            emg_flex = emg_0
-
-        self.mvc = {names[0]: emg_0, names[1]: emg_1,
-                    flex: emg_flex, extend: emg_extend}
+        return save_dict
 
     def normalise_data_RMS(self, data):
         """

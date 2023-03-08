@@ -11,6 +11,8 @@ import time
 import board
 import digitalio
 
+from utils import read_file
+
 
 class ActivateVibrationMotor():
     def __init__(self, user, date, left_leg=True):
@@ -76,19 +78,12 @@ class ActivateVibrationMotor():
             # level = level_conf["LEVEL"]
             level_conf["PIN"] = [self.pins[i] for i in level_conf["PIN"]]
 
-    def get_perception_thresholds(self):
-        """ Opens file with perceptual thresholds, converts the numbers to
-         floats and saves them in a list.
-        """
-        with open(self.path + 'perceptual_thresholds.csv', 'r') as file:
-            lines = file.read()
-
-        names = lines.split(',')
-        self.thresholds = [float(t) for t in names]
-
     def set_thresholds(self):
-        """ Configures the vibration time for each level.
+        """ Loads file with perceptual thresholds.
+        Configures the vibration time for each level.
         """
+        self.thresholds = read_file(self.path, 'perceptual_thresholds.csv',
+                                    ['float'])[0]
         for index, level_conf in enumerate(self.level_list):
             level_conf["VIBRATION_TIME"] = self.thresholds[index]
 
@@ -168,7 +163,6 @@ if __name__ == "__main__":
     date = '2023_03_02'  # make sure this folder exists
 
     motors = ActivateVibrationMotor(user, date)
-    motors.get_perception_thresholds()
     motors.set_thresholds()
 
     for vibrator_level in motors.level_list:  # loop through levels
