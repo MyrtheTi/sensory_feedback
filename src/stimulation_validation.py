@@ -35,14 +35,13 @@ def validation_loop(motors, validation=False, repeat=10):
         Defaults to 10.
     """
     stimulation_list = motors.level_list * repeat
-    print(len(stimulation_list))
     user_answers = []
     stimulated = []
 
     while stimulation_list:
         if len(stimulation_list) % len(motors.level_list) == 0:
-            print(len(stimulation_list) / len(motors.level_list),
-                  ' more rounds to go')
+            input(f'{int(len(stimulation_list) / len(motors.level_list))} '
+                  'more round(s) to go')
         index = random.randrange(len(stimulation_list))
         stimulus = stimulation_list[index]
         stimulation_list.pop(index)
@@ -88,10 +87,11 @@ def calculate_accuracy(stimulation_list, user_answers):
 
 
 if __name__ == '__main__':
-    user = 'me'
-    date = '2023_03_02'
+    user = 'U412'
+    date = '2023_03_09'
+    left_leg = True
 
-    motors = ActivateVibrationMotor(user, date)
+    motors = ActivateVibrationMotor(user, date, left_leg)
     motors.set_thresholds()
     input('Press enter to start the familiarisation and validation')
     validation_loop(motors, validation=False, repeat=1)  # familiarisation
