@@ -20,7 +20,7 @@ from postprocessing import extract_data
 class EmgCalibration():
     def __init__(self, user, date, sampling_rate=100):
         self.folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/" \
-                      "Scripts/sensory_feedback/emg_files/"
+                      "Scripts/sensory_feedback/user_files/"
         self.user = user
         self.date = date
         self.path = self.folder + self.user + '/' + self.date + '/'
@@ -215,12 +215,15 @@ class EmgCalibration():
 
 
 if __name__ == "__main__":
-    user = "me"
-    date = '2023_02_24'
+    user = 'U412'
+    date = '2023_03_09'
     sampling_rate = 10
 
     emg = EmgCalibration(user, date, sampling_rate)
     emg.load_data()
-    emg.calculate_rest_activity()
-    # emg.visualise_data(emg.flex_data, 'flexion')
-    emg.calculate_MVC()
+    emg.visualise_data(emg.flex_data, 'flexion')
+    emg.visualise_data(emg.extend_data, 'extension')
+    emg.visualise_data(emg.rest_data, 'rest')
+
+    # emg.calculate_rest_activity()
+    # emg.calculate_MVC()

@@ -20,12 +20,13 @@ if __name__ == '__main__':
     read_uart = ReadUart()
     read_uart.initialise_uart()
 
-    user = "me"
-    emg_calibration = '2023_02_24'
-    feedback_calibration = '2023_03_02'
+    user = 'U412'
+    emg_calibration = '2023_03_09'
+    feedback_calibration = '2023_03_09'
+    left_leg = True
 
-    motors = ActivateVibrationMotor(user, feedback_calibration)
-    motors.set_thresholds()
+    motors = ActivateVibrationMotor(user, feedback_calibration, left_leg)
+    motors.set_thresholds('perceptual_thresholds - Copy.csv')
 
     process_EMG = PreprocessEMG(user, emg_calibration, extend=1, flex=0)
     gc.collect()

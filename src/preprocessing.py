@@ -9,8 +9,8 @@ from utils import read_file
 
 
 class PreprocessEMG():
-    def __init__(self, user, date, folder='', extend='BSMB_MUSCLE_EXTEND',
-                 flex='BSMB_MUSCLE_FLEX'):
+    def __init__(self, user, date, folder='user_files/',
+                 extend='BSMB_MUSCLE_EXTEND', flex='BSMB_MUSCLE_FLEX'):
         self.folder = folder
         self.user = user
         self.date = date

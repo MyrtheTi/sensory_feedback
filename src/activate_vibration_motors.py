@@ -55,7 +55,7 @@ class ActivateVibrationMotor():
         self.vib_count = 0  # counts the times a motor is turned on
         self.prev_level = None
 
-        self.path = user + '/' + date + '/'
+        self.path = 'user_files/' + user + '/' + date + '/'
 
         self.initiate_pin_output()
         self.configure_pins()
@@ -78,12 +78,11 @@ class ActivateVibrationMotor():
             # level = level_conf["LEVEL"]
             level_conf["PIN"] = [self.pins[i] for i in level_conf["PIN"]]
 
-    def set_thresholds(self):
+    def set_thresholds(self, file='perceptual_thresholds.csv'):
         """ Loads file with perceptual thresholds.
         Configures the vibration time for each level.
         """
-        self.thresholds = read_file(self.path, 'perceptual_thresholds.csv',
-                                    ['float'])[0]
+        self.thresholds = read_file(self.path, file, ['float'])[0]
         for index, level_conf in enumerate(self.level_list):
             level_conf["VIBRATION_TIME"] = self.thresholds[index]
 
@@ -159,14 +158,14 @@ class ActivateVibrationMotor():
 
 
 if __name__ == "__main__":
-    user = 'me'
-    date = '2023_03_02'  # make sure this folder exists
-
-    motors = ActivateVibrationMotor(user, date)
-    motors.set_thresholds()
+    user = 'U412'
+    date = '2023_03_09'  # make sure this folder exists
+    left_leg = True
+    motors = ActivateVibrationMotor(user, date, left_leg)
+    motors.set_thresholds('perceptual_thresholds - Copy.csv')
 
     for vibrator_level in motors.level_list:  # loop through levels
         print('level', vibrator_level)
 
-        motors.vibrate_motor(vibrator_level, 5)  # vibrate for 5 seconds
+        motors.vibrate_motor(vibrator_level, 2)  # vibrate for 5 seconds
     print(motors.level_list)
