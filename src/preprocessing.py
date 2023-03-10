@@ -49,29 +49,6 @@ class PreprocessEMG():
                      flex: emg_flex, extend: emg_extend}
         return save_dict
 
-    def normalise_data_RMS(self, data):
-        """
-        Take the root mean square and normalises data according to 40% of the
-        maximum voluntary contraction (MVC).
-
-        Args:
-            data: raw EMG data of 100 previous measurements
-
-        Returns:
-            data frame: with 1 row with the normalised EMG data
-        """
-        normalised = data.iloc[-1]
-        RMS_window = data[[self.extend, self.flex]]
-        rms = {self.extend: [], self.flex: []}
-
-        for muscle in [self.extend, self.flex]:
-            square = RMS_window[muscle].pow(2)
-            rms[muscle] = square.mean(axis=0) ** 0.5 / (0.4 * self.mvc[muscle])
-
-        normalised[self.extend] = rms[self.extend]
-        normalised[self.flex] = rms[self.flex]
-        return normalised
-
     def normalise_data_MVC(self, data):
         """
         Clips EMG values to 0 - 500 values to decrease random noise.
@@ -138,36 +115,4 @@ class PreprocessEMG():
                 if t <= dominant_muscle < thresholds[i + 1]:
                     level = self.levels[i + 1]
         # print(dominant_muscle)
-        return level
-
-    def define_level(self, data):
-        """
-        Defines vibrator level based on muscle activation. First, the level is
-        defined for each muscle. The final level is the difference between
-        the extension and flexion level.
-
-        Args:
-            data_frame (data frame): Normalised EMG data from both extensor and
-            flexor muscle
-
-        Returns:
-            int: level, ranging from -4 to 4, -4 = extensor min & flexor max,
-            0 = equal contracted, 4 = extensor max & flexor min
-        """
-        thresholds = [0.0, 0.1, 0.2, 0.4, 0.65]  # levels 0-4 from Tchimino '22
-        level_extend = None
-        level_flex = None
-        # print(data_frame[[extend, flex]])
-        for i, t in enumerate(thresholds[:-1]):
-            if data[self.extend] >= thresholds[-1]:  # larger than 0.65
-                level_extend = 4
-            elif t <= data[self.extend] < thresholds[i + 1]:
-                level_extend = i
-
-            if data[self.flex] >= thresholds[-1]:  # larger than 0.65
-                level_flex = 4
-            elif t <= data[self.flex] < thresholds[i + 1]:
-                level_flex = i
-
-        level = level_extend - level_flex
         return level

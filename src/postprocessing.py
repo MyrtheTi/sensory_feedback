@@ -51,7 +51,6 @@ def simulate_online(user, emg_folder, data_folder, data_file):
 
     columns = [
         'timestamp', 'BSMB_MUSCLE_EXTEND', 'BSMB_MUSCLE_FLEX']
-    temp = pd.DataFrame(columns=columns)
 
     # select columns to process
     data = extract_data(data_path)
@@ -63,20 +62,13 @@ def simulate_online(user, emg_folder, data_folder, data_file):
 
     for _, row in data.iterrows():  # loop through data as if live data
         row = row.to_frame().T
-        temp = pd.concat([temp, row], ignore_index=True)
-        if len(temp) > 100:  # take out first line
-            temp.drop(axis=0, index=0, inplace=True)
 
         normal = process_EMG.normalise_data_MVC(row.iloc[0])
-        print(normal)
-        # normal = process_EMG.normalise_data_RMS(temp)
         vib_emg = process_EMG.threshold_reached(normal)
 
         if vib_emg:
-            level_l = process_EMG.define_level(normal)
-            level_m = process_EMG.define_dominant_muscle(normal)
-            if level_l != level_m:
-                print(level_l, level_m)
+            level = process_EMG.define_dominant_muscle(normal)
+            print(level)
 
 
 if __name__ == "__main__":
