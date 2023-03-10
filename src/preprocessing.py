@@ -85,12 +85,12 @@ class PreprocessEMG():
         Returns:
             data frame: with 1 row with the normalised EMG data
         """
-        data = [max(self.lower_bound, min(value, self.upper_bound))
-                for value in data]
         normalised = data
 
         for muscle in [self.extend, self.flex]:
-            emg_signal = data[muscle] - self.rest[muscle]
+            emg_value = max(self.lower_bound,
+                            min(data[muscle], self.upper_bound))
+            emg_signal = emg_value - self.rest[muscle]
             normalised[muscle] = emg_signal / (
                 0.6 * (self.mvc[muscle] - self.rest[muscle]))
 

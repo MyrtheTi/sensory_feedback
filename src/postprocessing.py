@@ -35,32 +35,31 @@ def extract_data(filename, verbose=True, comma=False):
     return df
 
 
-if __name__ == "__main__":
-    vib_emg = False
-    level = None
+def simulate_online(user, emg_folder, data_folder, data_file):
+    """ Create loop as if the recorded data was coming in through the online
+    system. Preprocess EMG and calculate level.
+
+    Args:
+        user (str): user name / number, folder where all user files are saved.
+        emg_folder (str): date of the emg calibration.
+        data_folder (str): date of the recorded file to analyse.
+        data_file (str): name of the recorded file to analyse.
+    """
+    folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/" \
+             "Scripts/sensory_feedback/user_files/"
+    data_path = folder + f'{user}/{data_folder}/{data_file}'
+
     columns = [
-        'timestamp',
-        'BASE_ACTIVITY', 'BASE_GAIT_PHASE',
-        'BSMB_MUSCLE_EXTEND', 'BSMB_MUSCLE_FLEX']
+        'timestamp', 'BSMB_MUSCLE_EXTEND', 'BSMB_MUSCLE_FLEX']
     temp = pd.DataFrame(columns=columns)
 
-    folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/EMG_data/"
-    # data_file = "20230111151536909_210000.8.Variables.csv"
-    # data_file = "ramp descend.csv"
-    # data_file = "signal check sitting.csv"
-    data_file = "stairs prev settings.csv"
-    data = extract_data(folder + data_file)
-
     # select columns to process
+    data = extract_data(data_path)
     data = data[columns]
     print(data.head())
 
-    calibration_folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/" \
-                         "Scripts/sensory_feedback/user_files/"
-    user = "me"
-    date = '2023_02_24'
-
-    process_EMG = PreprocessEMG(user, date, calibration_folder)
+    process_EMG = PreprocessEMG(user, emg_folder)
+    vib_emg = False
 
     for _, row in data.iterrows():  # loop through data as if live data
         row = row.to_frame().T
@@ -78,3 +77,16 @@ if __name__ == "__main__":
             level_m = process_EMG.define_dominant_muscle(normal)
             if level_l != level_m:
                 print(level_l, level_m)
+
+
+if __name__ == "__main__":
+    folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/EMG_data/"
+    # data_file = "20230111151536909_210000.8.Variables.csv"
+    # data_file = "ramp descend.csv"
+    # data_file = "signal check sitting.csv"
+    data_file = "stairs prev settings.csv"
+
+    user = "me"
+    emg_calibration = '2023_02_24'
+
+    simulate_online(user, emg_calibration, emg_calibration, 'extend.csv')
