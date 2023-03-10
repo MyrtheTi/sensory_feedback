@@ -12,23 +12,33 @@ from activate_vibration_motors import ActivateVibrationMotor
 from preprocessing import PreprocessEMG
 from read_uart import ReadUart
 
-if __name__ == '__main__':
-    gc.collect()
 
+def online_feedback_loop(
+        user, feedback_folder, emg_folder,
+        threshold_file='perceptual_threshold.csv', left_leg=True):
+    """ Loop to run in code.py on the microprocessor with CircuitPython.
+    Online processing of incoming EMG signals and activates the vibration
+    motors accordingly.
+
+    Args:
+        user (str): user name or number, folder where all user files are saved.
+        feedback_folder (str): path to files for thresholds file.
+        emg_folder (str): path to files for emg calibration.
+        threshold_file (str, optional): file with perceptual thresholds for
+        vibration for each level. Defaults to 'perceptual_threshold.csv'.
+        left_leg (bool, optional): Whether the motors are placed on the left or
+        right leg. Defaults to True.
+    """
+    gc.collect()
     vib_emg = False
 
     read_uart = ReadUart()
     read_uart.initialise_uart()
 
-    user = 'U412'
-    emg_calibration = '2023_03_09'
-    feedback_calibration = '2023_03_09'
-    left_leg = True
+    motors = ActivateVibrationMotor(user, feedback_folder, left_leg)
+    motors.set_thresholds(threshold_file)
 
-    motors = ActivateVibrationMotor(user, feedback_calibration, left_leg)
-    motors.set_thresholds('perceptual_thresholds - Copy.csv')
-
-    process_EMG = PreprocessEMG(user, emg_calibration, extend=1, flex=0)
+    process_EMG = PreprocessEMG(user, emg_folder, extend=1, flex=0)
     gc.collect()
 
     while True:  # infinite loop
@@ -61,3 +71,14 @@ if __name__ == '__main__':
         # turn off all others
         motors.set_motor_value(pins_off, False)
         gc.collect()
+
+
+if __name__ == '__main__':
+    user = 'me'
+    feedback_calibration = '2023_03_02'
+    emg_calibration = '2023_02_24'
+    threshold_file = 'perceptual_thresholds.csv'
+    left_leg = True
+
+    online_feedback_loop(user, feedback_calibration, emg_calibration,
+                         threshold_file, left_leg)
