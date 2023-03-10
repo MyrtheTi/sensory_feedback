@@ -55,7 +55,7 @@ class ActivateVibrationMotor():
         self.vib_count = 0  # counts the times a motor is turned on
         self.prev_level = None
 
-        self.path = 'user_files/' + user + '/' + date + '/'
+        self.path = f'user_files/{user}/{date}/'
 
         self.initiate_pin_output()
         self.configure_pins()

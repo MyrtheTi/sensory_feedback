@@ -14,7 +14,7 @@ class PreprocessEMG():
         self.folder = folder
         self.user = user
         self.date = date
-        self.path = self.folder + self.user + '/' + self.date + '/'
+        self.path = f'{self.folder}{self.user}/{self.date}/'
 
         self.extend = extend
         self.flex = flex

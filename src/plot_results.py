@@ -11,13 +11,16 @@ from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score
 from utils import read_file
 
 
-def plot_confusion_matrix(path):
+def plot_confusion_matrix(user, date):
     """ Plots the confusion matrices of the validation using all levels and
     when separated in 3 levels (flexion, co-contraction, and extension).
 
     Args:
-        path (string): Path of the validation files.
+        user (str): User name / number of the validation files.
+        date (str): Date of the validation files.
     """
+    path = f'user_files/{user}/{date}/'
+
     true_labels = read_file(path, 'true_labels.csv', ['int'])[0]
     predicted_labels = read_file(path, 'predicted_labels.csv', ['int'])[0]
 
@@ -71,9 +74,7 @@ def converge_levels(labels):
 
 
 if __name__ == '__main__':
-    user = 'me'
-    date = '2023_03_02'
+    user = 'U412'
+    date = '2023_03_09'
 
-    path = 'user_files/' + user + '/' + date + '/'
-    print(path)
-    plot_confusion_matrix(path)
+    plot_confusion_matrix(user, date)

@@ -19,11 +19,10 @@ from postprocessing import extract_data
 
 class EmgCalibration():
     def __init__(self, user, date, sampling_rate=100):
-        self.folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/" \
-                      "Scripts/sensory_feedback/user_files/"
+        self.folder = 'user_files/'
         self.user = user
         self.date = date
-        self.path = self.folder + self.user + '/' + self.date + '/'
+        self.path = f'{self.folder}{self.user}/{self.date}/'
 
         self.rest_file = "rest.csv"
         self.flex_file = "flex.csv"
@@ -56,13 +55,14 @@ class EmgCalibration():
 
         selected_data = self.rest_data.iloc[rest_start:rest_end]
         if len(selected_data) < 8 * self.sampling_rate:
-            warnings.warn("Total rest contraction recorded is less than 8 \
-                seconds. Consider recording again.")
+            message = 'Total rest contraction recorded is less than 8 '\
+                'seconds. Consider recording again.'
+            warnings.warn(message)
 
         avg_rest = pd.DataFrame(
             {self.extend: [selected_data[self.extend].mean()],
              self.flex: [selected_data[self.flex].mean()]})
-        avg_rest.to_csv(self.path + 'rest_activity.csv', index=False)
+        avg_rest.to_csv(f'{self.path}rest_activity.csv', index=False)
 
     def calculate_MVC(self):
         """ Calculates the maximum voluntary contraction (MVC) for both flexor
@@ -78,7 +78,7 @@ class EmgCalibration():
         """
         try:
             positions_flex = pd.read_csv(
-                self.path + 'mvc_positions_flexion.csv')
+                f'{self.path}mvc_positions_flexion.csv')
             start_flex = positions_flex.start.to_list()
             end_flex = positions_flex.end.to_list()
             self.visualise_data(
@@ -96,14 +96,14 @@ class EmgCalibration():
 
         try:
             positions_extend = pd.read_csv(
-                self.path + 'mvc_positions_extension.csv')
+                f'{self.path}mvc_positions_extension.csv')
             start_extend = positions_extend.start.to_list()
             end_extend = positions_extend.end.to_list()
             self.visualise_data(
                 self.extend_data, 'extension', start_extend, end_extend)
             user_input = input(
                 "Are you happy with the start and end positions?\n"
-                "Press y when happy."
+                "Press y when happy. "
                 "Press any other key when you want to reset the boundaries.\n")
             if user_input != 'y':
                 start_extend, end_extend = self.extract_contraction_times(
@@ -121,7 +121,7 @@ class EmgCalibration():
 
         mvc = pd.DataFrame({self.extend: [mvc_extend[self.extend]],
                             self.flex: [mvc_flex[self.flex]]})
-        mvc.to_csv(self.path + 'mvc.csv', index=False)
+        mvc.to_csv(f'{self.path}mvc.csv', index=False)
 
     def extract_contraction_times(self, data_frame, muscle):
         """ Plots data and mark with cursor when contraction starts and ends.
@@ -137,11 +137,9 @@ class EmgCalibration():
         fig, ax = plt.subplots(constrained_layout=True)
 
         data_frame.plot(
-            kind='line', x='timestamp', y=self.extend, color='red', ax=ax)
-        data_frame.plot(
-            kind='line', x='timestamp', y=self.flex, color='green', ax=ax)
+            kind='line', x='timestamp', y=[self.extend, self.flex], ax=ax)
 
-        plt.title('EMG activity over time during %s' % muscle)
+        plt.title(f'EMG activity over time during {muscle}')
 
         zoom_factory(ax)
         panhandler(fig, button=2)
@@ -154,8 +152,7 @@ class EmgCalibration():
         start.sort()  # order based on timestamp
         end.sort()
         positions = pd.DataFrame({"start": start, "end": end})
-        positions.to_csv(self.path + 'mvc_positions_%s.csv' % muscle,
-                         index=False)
+        positions.to_csv(f'{self.path}mvc_positions_{muscle}.csv', index=False)
         return start, end
 
     def select_data(self, data_frame, start, end):
@@ -184,8 +181,9 @@ class EmgCalibration():
             contraction_length += len(contraction_data)
 
         if contraction_length < 10 * self.sampling_rate:
-            warnings.warn("Total muscle contraction recorded is less than 10 \
-                seconds. Consider recording again.")
+            message = 'Total muscle contraction recorded is less than 10 '\
+                'seconds. Consider recording again.'
+            warnings.warn(message)
 
         return avg_contraction
 
@@ -194,36 +192,37 @@ class EmgCalibration():
         """ Visualise recorded data in plot over time.
 
         Args:
-            data_frame (data frame): timestamp, flex, and extend data
+            data_frame (data frame): timestamp, flex, and extend data.
+            activity (str): activity name.
+            start_markers (list): x coordinates for muscle contraction start.
+            end_markers (list): x coordinates for muscle contraction end.
         """
         ax = plt.gca()
         data_frame.plot(
-            kind='line', x='timestamp', y=self.extend, color='red', ax=ax)
-        data_frame.plot(
-            kind='line', x='timestamp', y=self.flex, color='green', ax=ax)
+            kind='line', x='timestamp', y=[self.extend, self.flex], ax=ax)
 
         if start_markers:
             for x_coordinates in start_markers:
-                plt.axvline(x_coordinates, color='blue')
+                plt.axvline(x_coordinates, color='green')
         if end_markers:
             for x_coordinates in end_markers:
-                plt.axvline(x_coordinates, color='orange')
+                plt.axvline(x_coordinates, color='red')
 
         plt.grid()
-        plt.title('EMG activity over timed during %s' % activity)
+        plt.title(f'EMG activity over timed during {activity}')
         plt.show()
 
 
 if __name__ == "__main__":
-    user = 'U412'
-    date = '2023_03_09'
+    user = 'me'
+    date = '2023_02_24'
     sampling_rate = 10
 
     emg = EmgCalibration(user, date, sampling_rate)
     emg.load_data()
-    emg.visualise_data(emg.flex_data, 'flexion')
-    emg.visualise_data(emg.extend_data, 'extension')
-    emg.visualise_data(emg.rest_data, 'rest')
+    # emg.visualise_data(emg.flex_data, 'flexion')
+    # emg.visualise_data(emg.extend_data, 'extension')
+    # emg.visualise_data(emg.rest_data, 'rest')
 
-    # emg.calculate_rest_activity()
-    # emg.calculate_MVC()
+    emg.calculate_rest_activity()
+    emg.calculate_MVC()
