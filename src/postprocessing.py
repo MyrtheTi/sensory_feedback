@@ -5,6 +5,7 @@
  * @desc Script for processing logged EMG data from a csv.
 """
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 from preprocessing import PreprocessEMG
@@ -35,9 +36,51 @@ def extract_data(filename, verbose=True, comma=False):
     return df
 
 
-def simulate_online(user, emg_folder, data_folder, data_file):
+def visualise_data(raw_data, normal_data, data_file,
+                   extend='BSMB_MUSCLE_EXTEND', flex='BSMB_MUSCLE_FLEX'):
+    """ Plots data in subplots of raw data, normalised data, and difference
+    data with defined vibration levels.
+
+    Args:
+        raw_data (data frame): data frame with raw data
+        normal_data (data frame): data frame with normalised data and levels
+        data_file (str): name of data file used
+        extend (str, optional): column name for extension data.
+        Defaults to 'BSMB_MUSCLE_EXTEND'.
+        flex (str, optional): column name for flexion data.
+        Defaults to 'BSMB_MUSCLE_FLEX'.
+    """
+    fig, axes = plt.subplots(ncols=3, figsize=(20, 10))
+    ax1, ax2, ax3 = axes.flatten()
+
+    raw_data.plot(kind='line', x='timestamp', y=[extend, flex], ax=ax1)
+    ax1.set_ylabel('Raw EMG data')
+
+    normal_data.plot(kind='line', x='timestamp', y=[extend, flex], ax=ax2)
+    ax2.set_ylabel('Normalised EMG data')
+
+    normal_data['difference'] = normal_data[extend] - normal_data[flex]
+    normal_data.plot(kind='line', x='timestamp', y='difference', ax=ax3)
+    ax3.set_ylabel('Normalised extension - flexion')
+    ax3.set_ylim(-1, 1)
+    ax3.legend(loc='upper left')
+
+    ax4 = ax3.twinx()
+    ax4.set_ylim(-4, 4)
+    normal_data.plot(
+        kind='line', x='timestamp', y='LEVEL', color='orange', ax=ax4)
+    ax4.set_ylabel('Vibration level')
+
+    plt.grid()
+    plt.suptitle(f'EMG activity from {data_file}')
+    plt.show()
+
+
+def simulate_online(user, emg_folder, data_folder, data_file,
+                    folder='user_files/',
+                    extend='BSMB_MUSCLE_EXTEND', flex='BSMB_MUSCLE_FLEX'):
     """ Create loop as if the recorded data was coming in through the online
-    system. Preprocess EMG and calculate level.
+    system. Preprocess EMG and calculate level. Then plots the data.
 
     Args:
         user (str): user name / number, folder where all user files are saved.
@@ -45,17 +88,15 @@ def simulate_online(user, emg_folder, data_folder, data_file):
         data_folder (str): date of the recorded file to analyse.
         data_file (str): name of the recorded file to analyse.
     """
-    folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/" \
-             "Scripts/sensory_feedback/user_files/"
-    data_path = folder + f'{user}/{data_folder}/{data_file}'
+    data_path = f'{folder}{user}/{data_folder}/{data_file}'
 
-    columns = [
-        'timestamp', 'BSMB_MUSCLE_EXTEND', 'BSMB_MUSCLE_FLEX']
-
-    # select columns to process
     data = extract_data(data_path)
-    data = data[columns]
+    raw_data = data[['timestamp', extend, flex]]
     print(data.head())
+
+    levels = []
+    normalised_flex = []
+    normalised_extend = []
 
     process_EMG = PreprocessEMG(user, emg_folder)
     vib_emg = False
@@ -64,11 +105,20 @@ def simulate_online(user, emg_folder, data_folder, data_file):
         row = row.to_frame().T
 
         normal = process_EMG.normalise_data_MVC(row.iloc[0])
+        normalised_flex.append(normal[flex])
+        normalised_extend.append(normal[extend])
         vib_emg = process_EMG.threshold_reached(normal)
 
         if vib_emg:
             level = process_EMG.define_dominant_muscle(normal)
-            print(level)
+            levels.append(level)
+        else:
+            levels.append(None)
+
+    normal_data = pd.DataFrame({
+        'timestamp': data['timestamp'], flex: normalised_flex,
+        extend: normalised_extend, 'LEVEL': levels})
+    visualise_data(raw_data, normal_data, data_file)
 
 
 if __name__ == "__main__":
@@ -81,4 +131,4 @@ if __name__ == "__main__":
     user = "me"
     emg_calibration = '2023_02_24'
 
-    simulate_online(user, emg_calibration, emg_calibration, 'extend.csv')
+    simulate_online(user, emg_calibration, emg_calibration, 'flex.csv')
