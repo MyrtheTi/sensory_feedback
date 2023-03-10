@@ -122,8 +122,8 @@ class ActivateVibrationMotor():
 
     def adjust_off_time(self, level):
         """ Adjusts time the vibrators are turned off. If the level is the
-        same, the motors are vibrating with a longer interval. If the level
-        changes, the motors are vibrating faster again.
+        same, the motors are vibrating with a longer interval, at most at
+        max_off_time. If the level changes, the motors vibrate faster again.
 
         Args:
             level (int): Defines current level.
@@ -139,8 +139,7 @@ class ActivateVibrationMotor():
                 # decrease frequency if the EMG activation is the same
                 self.off_time += 0.100
                 self.prev_count += 1
-                if self.off_time > self.max_off_time:
-                    self.off_time = self.max_off_time
+                self.off_time = min(self.off_time, self.max_off_time)
 
     def vibrate_motor(self, vibrator_level, duration=2):
         """ Activate motor specified by vibrator_level for duration.
