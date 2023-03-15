@@ -41,7 +41,7 @@ def plot_confusion_matrix(user, date):
             cmap=plt.cm.Blues,
             normalize='true',
             ax=ax,
-            display_labels=labels
+            labels=labels
         )
         ax.set_title(title)
         accuracy = accuracy_score(true, predicted)
@@ -74,7 +74,7 @@ def converge_levels(labels):
 
 
 if __name__ == '__main__':
-    user = 'U412'
-    date = '2023_03_09'
+    user = 'me'
+    date = '2023_03_15'
 
     plot_confusion_matrix(user, date)
