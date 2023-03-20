@@ -70,6 +70,7 @@ def visualise_data(raw_data, normal_data, data_file,
     normal_data.plot(
         kind='line', x='timestamp', y='LEVEL', color='orange', ax=ax4)
     ax4.set_ylabel('Vibration level')
+    ax4.legend(loc='upper right')
 
     plt.grid()
     plt.suptitle(f'EMG activity from {data_file}')
@@ -78,7 +79,8 @@ def visualise_data(raw_data, normal_data, data_file,
 
 def simulate_online(user, emg_folder, data_folder, data_file,
                     folder='user_files/',
-                    extend='BSMB_MUSCLE_EXTEND', flex='BSMB_MUSCLE_FLEX'):
+                    extend='BSMB_MUSCLE_EXTEND', flex='BSMB_MUSCLE_FLEX',
+                    from_log=True):
     """ Create loop as if the recorded data was coming in through the online
     system. Preprocess EMG and calculate level. Then plots the data.
 
@@ -87,18 +89,29 @@ def simulate_online(user, emg_folder, data_folder, data_file,
         emg_folder (str): date of the emg calibration.
         data_folder (str): date of the recorded file to analyse.
         data_file (str): name of the recorded file to analyse.
+        folder (str): folder where all user files are located. Defaults to
+        'user_files/'.
+        extend (str): name of column with emg data from extension muscle.
+        flex (str): name of column with emg data from flexion muscle.
+        from_log (bool): whether the data comes from a log from the panda or
+        another Össur device. Defaults to True.
     """
     data_path = f'{folder}{user}/{data_folder}/{data_file}'
 
-    data = extract_data(data_path)
-    raw_data = data[['timestamp', extend, flex]]
+    if from_log:
+        data = extract_data(data_path)
+    else:
+        data = pd.read_csv(data_path)
     print(data.head())
+    raw_data = data[['timestamp', extend, flex]]
 
     levels = []
     normalised_flex = []
     normalised_extend = []
 
     process_EMG = PreprocessEMG(user, emg_folder)
+    # process_EMG.mvc = process_EMG.create_dict('mvc copy.csv')
+    # process_EMG.rest = process_EMG.create_dict('rest_activity copy.csv')
     vib_emg = False
 
     for _, row in data.iterrows():  # loop through data as if live data
@@ -122,13 +135,9 @@ def simulate_online(user, emg_folder, data_folder, data_file,
 
 
 if __name__ == "__main__":
-    folder = "C:/Users/mtillerman/OneDrive - Ossur hf/Documents/EMG_data/"
-    # data_file = "20230111151536909_210000.8.Variables.csv"
-    # data_file = "ramp descend.csv"
-    # data_file = "signal check sitting.csv"
-    data_file = "stairs prev settings.csv"
+    user = "U412"
+    data_folder = '2023_03_16'
+    emg_calibration = '2023_03_16'
+    data_file = 'signal check sitting.csv'
 
-    user = "me"
-    emg_calibration = '2023_02_24'
-
-    simulate_online(user, emg_calibration, emg_calibration, 'flex.csv')
+    simulate_online(user, emg_calibration, data_folder, data_file)
