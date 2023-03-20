@@ -21,6 +21,7 @@ class PreprocessEMG():
         self.levels = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
         self.upper_bound = 500  # upper and lower bound for EMG values
         self.lower_bound = 0
+        self.mvc_percentage = 1.0  # mvc percentage to normalise over
 
         self.mvc = self.create_dict('mvc.csv')
         self.rest = self.create_dict('rest_activity.csv')
@@ -53,8 +54,8 @@ class PreprocessEMG():
         """
         Clips EMG values to 0 - 500 values to decrease random noise.
         Subtracts the average rest activity from the data.
-        Normalises data according to 60% of the maximum voluntary contraction
-        (MVC)
+        Normalises data according to mvc_percentage of the maximum voluntary
+        contraction (MVC).
 
         Args:
             data: raw EMG data of 100 previous measurements
@@ -69,7 +70,7 @@ class PreprocessEMG():
                             min(data[muscle], self.upper_bound))
             emg_signal = emg_value - self.rest[muscle]
             normalised[muscle] = emg_signal / (
-                0.6 * (self.mvc[muscle] - self.rest[muscle]))
+                self.mvc_percentage * (self.mvc[muscle] - self.rest[muscle]))
 
         return normalised
 
