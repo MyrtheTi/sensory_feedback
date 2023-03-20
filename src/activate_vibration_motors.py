@@ -49,7 +49,7 @@ class ActivateVibrationMotor():
         self.pin_index = list(range(0, len(self.pins)))  # 0 to 7
         self.left_leg = left_leg
         self.min_off_time = 0.100  # seconds
-        self.max_off_time = 1.000  # seconds
+        self.max_off_time = 0.500  # seconds
         self.off_time = self.min_off_time
 
         self.vib_count = 0  # counts the times a motor is turned on
@@ -120,51 +120,52 @@ class ActivateVibrationMotor():
                 level["PREV_TIME"] = now
                 self.set_motor_value(level["PIN"], False)
 
-    def adjust_off_time(self, level):
+    def adjust_off_time(self, vibrator_level):
         """ Adjusts time the vibrators are turned off. If the level is the
-        same, the motors are vibrating with a longer interval, at most at
-        max_off_time. If the level changes, the motors vibrate faster again.
+        same for 2 seconds, the motors vibrate with a longer interval,
+        at max_off_time. If the level changes, the off_time resets.
 
         Args:
-            level (int): Defines current level.
+            vibrator_level (dict): Information of the current level.
         """
+        level = vibrator_level["LEVEL"]
         if level != self.prev_level:
-            # increase frequency if EMG activation changes
+            # resets frequency if EMG activation changes
             self.off_time = self.min_off_time
             self.vib_count = 0
-            self.prev_count = 0
             self.prev_level = level
         else:
-            if self.prev_count != self.vib_count:
+            vibration_time = vibrator_level["VIBRATION_TIME"]
+            # more than 2 seconds the same level
+            if (vibration_time + self.min_off_time) * self.vib_count > 2:
                 # decrease frequency if the EMG activation is the same
-                self.off_time += 0.100
-                self.prev_count += 1
-                self.off_time = min(self.off_time, self.max_off_time)
+                self.off_time = self.max_off_time
 
     def vibrate_motor(self, vibrator_level, duration=2):
         """ Activate motor specified by vibrator_level for duration.
 
         Args:
             vibrator_level (dict): Level information
-            duration (int, optional): Time the motor should vibrate on and off.
-             Defaults to 2.
+            duration (int, optional): Time (in seconds) the motor should
+            vibrate on and off. Defaults to 2.
         """
         start = time.monotonic()
         while time.monotonic() - start < duration:
             now = time.monotonic()
             self.check_time_to_change(vibrator_level, now)
+            self.adjust_off_time(vibrator_level)
         self.set_motor_value(vibrator_level["PIN"], False)  # turn off
 
 
 if __name__ == "__main__":
     user = 'U412'
     date = '2023_03_09'  # make sure this folder exists
-    left_leg = True
+    left_leg = False
     motors = ActivateVibrationMotor(user, date, left_leg)
-    motors.set_thresholds('perceptual_thresholds - Copy.csv')
+    motors.set_thresholds('perceptual_thresholds.csv')
 
     for vibrator_level in motors.level_list:  # loop through levels
         print('level', vibrator_level)
-
-        motors.vibrate_motor(vibrator_level, 2)  # vibrate for 5 seconds
+        motors.vibrate_motor(vibrator_level, 5)  # vibrate for 5 seconds
+        time.sleep(1)
     print(motors.level_list)

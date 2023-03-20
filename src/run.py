@@ -45,17 +45,17 @@ def online_feedback_loop(
         now = time.monotonic()
         data = read_uart.get_serial_data()
         emg_value = read_uart.extract_emg_data(data)
-
+        # print(emg_value)
         normal = process_EMG.normalise_data_MVC(emg_value)
         vib_emg = process_EMG.threshold_reached(normal)
 
         if vib_emg:
             level = process_EMG.define_dominant_muscle(normal)
             print('level', level)
-            motors.adjust_off_time(level)
 
             index = level + 4
             vibrator_level = motors.level_list[index]
+            motors.adjust_off_time(vibrator_level)
             motors.check_time_to_change(vibrator_level, now)
             pin_on_index = vibrator_level["PIN_INDEX"]
         else:
@@ -74,11 +74,11 @@ def online_feedback_loop(
 
 
 if __name__ == '__main__':
-    user = 'me'
-    feedback_calibration = '2023_03_02'
-    emg_calibration = '2023_02_24'
-    threshold_file = 'perceptual_thresholds.csv'
-    left_leg = True
+    user = 'U401'
+    feedback_calibration = '2023_03_17'
+    emg_calibration = '2023_03_17'
+    threshold_file = 'perceptual_thresholds - Copy.csv'
+    left_leg = False
 
     online_feedback_loop(user, feedback_calibration, emg_calibration,
                          threshold_file, left_leg)
