@@ -131,3 +131,6 @@ dmypy.json
 # VS code project settings
 .vscode/
 Scripts.code-workspace
+
+# User files
+user_files/
