@@ -74,6 +74,7 @@ def visualise_data(raw_data, normal_data, data_file,
 
     plt.grid()
     plt.suptitle(f'EMG activity from {data_file}')
+    plt.tight_layout()
     plt.show()
 
 
@@ -135,9 +136,11 @@ def simulate_online(user, emg_folder, data_folder, data_file,
 
 
 if __name__ == "__main__":
-    user = "U412"
-    data_folder = '2023_03_16'
-    emg_calibration = '2023_03_16'
-    data_file = 'signal check sitting.csv'
+    user = 'U493'
+    data_folder = '2023_03_27'
+    emg_calibration = '2023_03_27'
+    data_file = 'sEMG_feedback_power_ankle_log.csv'
+    from_log = True
 
-    simulate_online(user, emg_calibration, data_folder, data_file)
+    simulate_online(user, emg_calibration, data_folder, data_file,
+                    from_log=from_log)
