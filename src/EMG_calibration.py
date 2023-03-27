@@ -54,9 +54,10 @@ class EmgCalibration():
             rest_end = rest_start + 10 * sampling_rate
 
         selected_data = self.rest_data.iloc[rest_start:rest_end]
-        if len(selected_data) < 8 * self.sampling_rate:
-            message = 'Total rest contraction recorded is less than 8 '\
-                'seconds. Consider recording again.'
+        if len(selected_data) < 6 * self.sampling_rate:
+            message = 'Total rest contraction recorded is '\
+                f'{len(selected_data) / self.sampling_rate} seconds. '\
+                'Consider recording again.'
             warnings.warn(message)
 
         avg_rest = pd.DataFrame(
@@ -180,9 +181,10 @@ class EmgCalibration():
             avg_contraction.loc[i] = mean_contraction
             contraction_length += len(contraction_data)
 
-        if contraction_length < 10 * self.sampling_rate:
-            message = 'Total muscle contraction recorded is less than 10 '\
-                'seconds. Consider recording again.'
+        if contraction_length < 6 * self.sampling_rate:
+            message = 'Total muscle contraction recorded is '\
+                f'{contraction_length / self.sampling_rate} seconds. '\
+                'Consider recording again.'
             warnings.warn(message)
 
         return avg_contraction
