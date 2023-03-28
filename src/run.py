@@ -6,7 +6,8 @@
 """
 
 import gc
-import time
+
+import supervisor
 
 from activate_vibration_motors import ActivateVibrationMotor
 from preprocessing import PreprocessEMG
@@ -42,10 +43,10 @@ def online_feedback_loop(
     gc.collect()
 
     while True:  # infinite loop
-        now = time.monotonic()
+        now = supervisor.ticks_ms()
         data = read_uart.get_serial_data()
         emg_value = read_uart.extract_emg_data(data)
-        # print(emg_value)
+        print(emg_value)
         normal = process_EMG.normalise_data_MVC(emg_value)
         vib_emg = process_EMG.threshold_reached(normal)
 
@@ -74,11 +75,11 @@ def online_feedback_loop(
 
 
 if __name__ == '__main__':
-    user = 'U401'
-    feedback_calibration = '2023_03_17'
-    emg_calibration = '2023_03_17'
+    user = 'me'
+    feedback_calibration = '2023_03_28'
+    emg_calibration = '2023_02_24'
     threshold_file = 'perceptual_thresholds - Copy.csv'
-    left_leg = False
+    left_leg = True
 
     online_feedback_loop(user, feedback_calibration, emg_calibration,
                          threshold_file, left_leg)

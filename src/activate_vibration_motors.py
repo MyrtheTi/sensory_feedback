@@ -10,6 +10,7 @@ import time
 
 import board
 import digitalio
+import supervisor
 
 from utils import read_file
 
@@ -48,8 +49,8 @@ class ActivateVibrationMotor():
 
         self.pin_index = list(range(0, len(self.pins)))  # 0 to 7
         self.left_leg = left_leg
-        self.min_off_time = 0.100  # seconds
-        self.max_off_time = 0.500  # seconds
+        self.min_off_time = 100  # milliseconds
+        self.max_off_time = 500  # milliseconds
         self.off_time = self.min_off_time
 
         self.vib_count = 0  # counts the times a motor is turned on
@@ -137,7 +138,7 @@ class ActivateVibrationMotor():
         else:
             vibration_time = vibrator_level["VIBRATION_TIME"]
             # more than 2 seconds the same level
-            if (vibration_time + self.min_off_time) * self.vib_count > 2:
+            if (vibration_time + self.min_off_time) * self.vib_count > 2000:
                 # decrease frequency if the EMG activation is the same
                 self.off_time = self.max_off_time
 
@@ -149,23 +150,23 @@ class ActivateVibrationMotor():
             duration (int, optional): Time (in seconds) the motor should
             vibrate on and off. Defaults to 2.
         """
-        start = time.monotonic()
-        while time.monotonic() - start < duration:
-            now = time.monotonic()
+        start = supervisor.ticks_ms()
+        while supervisor.ticks_ms() - start < (duration * 1000):
+            now = supervisor.ticks_ms()
             self.check_time_to_change(vibrator_level, now)
             self.adjust_off_time(vibrator_level)
         self.set_motor_value(vibrator_level["PIN"], False)  # turn off
 
 
 if __name__ == "__main__":
-    user = 'U412'
-    date = '2023_03_09'  # make sure this folder exists
-    left_leg = False
+    user = 'me'
+    date = '2023_03_28'  # make sure this folder exists
+    left_leg = True
     motors = ActivateVibrationMotor(user, date, left_leg)
-    motors.set_thresholds('perceptual_thresholds.csv')
+    motors.set_thresholds('perceptual_thresholds - Copy.csv')
 
     for vibrator_level in motors.level_list:  # loop through levels
         print('level', vibrator_level)
-        motors.vibrate_motor(vibrator_level, 5)  # vibrate for 5 seconds
+        motors.vibrate_motor(vibrator_level, 2)
         time.sleep(1)
     print(motors.level_list)

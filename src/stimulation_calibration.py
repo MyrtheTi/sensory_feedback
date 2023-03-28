@@ -28,14 +28,15 @@ def calibration_loop(motors, vibrator_level):
         float: vibration_time from the moment the loop is broken
     """
     input('Press enter when you are ready to start the next round\n')
-    vibration_time = 0  # s
+    vibration_time = 0  # ms
     on = 0
     while True:
         on += 1
-        vibration_time = on / 1000  # increase duration by 1ms
-        print(vibration_time, 's')
+        vibration_time = on  # increase duration by 1ms
+        print(vibration_time, 'ms')
         vibrator_level["VIBRATION_TIME"] = vibration_time
 
+        motors.prev_level = None  # so off_time is not adjusted
         motors.vibrate_motor(vibrator_level, 2)
 
         user_input = input(
@@ -49,10 +50,11 @@ def calibration_loop(motors, vibrator_level):
 
 if __name__ == '__main__':
     user = 'me'
-    date = '2023_03_02'  # make sure this folder exists
-    repeat = 5  # repeat the calibration 5 times
+    date = '2023_03_28'  # make sure this folder exists
+    repeat = 2  # repeat the calibration 5 times
+    left_leg = True
 
-    motors = ActivateVibrationMotor(user, date)
+    motors = ActivateVibrationMotor(user, date, left_leg)
     thresholds = [[] for _ in motors.level_list]
 
     for _ in range(repeat):
