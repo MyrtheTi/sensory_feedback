@@ -25,6 +25,16 @@ class PreprocessEMG():
 
         self.mvc = self.create_dict('mvc.csv')
         self.rest = self.create_dict('rest_activity.csv')
+        self.calculate_normal_mvc()
+
+    def calculate_normal_mvc(self):
+        """ Calculates the value to normalise the emg data to based on the MVC
+        percentage used and the rest emg values.
+        """
+        self.normal_mvc = {}
+        for key, value in self.mvc.items():
+            self.normal_mvc[key] = self.mvc_percentage * (
+                value - self.rest[key])
 
     def create_dict(self, file_name):
         """ Loads file with calibration data and saves it in a dict.
@@ -69,9 +79,7 @@ class PreprocessEMG():
             emg_value = max(self.lower_bound,
                             min(data[muscle], self.upper_bound))
             emg_signal = emg_value - self.rest[muscle]
-            normalised[muscle] = emg_signal / (
-                self.mvc_percentage * (self.mvc[muscle] - self.rest[muscle]))
-
+            normalised[muscle] = emg_signal / self.normal_mvc[muscle]
         return normalised
 
     def threshold_reached(self, data, vib_emg=False):
