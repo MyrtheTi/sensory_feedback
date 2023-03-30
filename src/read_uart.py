@@ -14,9 +14,9 @@ from preprocessing import PreprocessEMG
 
 
 class ReadUart():
-    def __init__(self, num_variables=2, array_length=14, baud_rate=921600,
-                 data_num_bytes=2, start_num_bytes=8):
-        self.num_variables = num_variables  # EMG_Flex, EMG_Extend
+    def __init__(self, array_length=14, baud_rate=921600, data_num_bytes=2,
+                 start_num_bytes=8):
+        self.num_variables = 2  # EMG_Flex, EMG_Extend
         self.array_length = array_length  # num bytes to read at a time
         self.baud_rate = baud_rate
         self.data_num_bytes = data_num_bytes
@@ -61,11 +61,10 @@ class ReadUart():
         Returns:
             list: emg data in ints for flex and extend muscle
         """
-        emg_data = [
-            private_data[self.start_num_bytes + i * self.data_num_bytes:
-                         self.start_num_bytes + self.data_num_bytes +
-                         i * self.data_num_bytes]
-            for i in range(self.num_variables)]
+        emg = private_data[
+            self.start_num_bytes:
+            self.start_num_bytes + self.data_num_bytes * self.num_variables]
+        emg_data = [emg[:self.data_num_bytes], emg[self.data_num_bytes:]]
 
         # convert bytes to int
         emg_value = [struct.unpack(self.data_type, data)[0]
