@@ -30,9 +30,10 @@ class ReadUart():
 
     def initialise_uart(self):
         """ Initialise UART port and set baud rate.
-        Read up to array_length bytes at a time.
+        Read up to array_length bytes at a time, or until timeout (s).
         """
-        self.uart = busio.UART(board.TX, board.RX, baudrate=self.baud_rate)
+        self.uart = busio.UART(board.TX, board.RX, baudrate=self.baud_rate,
+                               timeout=0.00001)
         self.raw_data = bytearray(self.array_length)
 
     def get_serial_data(self):
@@ -41,7 +42,8 @@ class ReadUart():
         correct length.
 
         Returns:
-            bytearray: array of array_length bytes starting with the start byte
+            bytearray: array of bytes starting with the start byte if data is
+            available before timeout
         """
         self.uart.readinto(self.raw_data)
         start_index = self.raw_data.find(self.starting_byte)  # find start byte

@@ -43,35 +43,42 @@ def online_feedback_loop(
     gc.collect()
 
     while True:  # infinite loop
-        now = supervisor.ticks_ms()
-        data = read_uart.get_serial_data()
-        emg_value = read_uart.extract_emg_data(data)
-        print(emg_value)
-        normal = process_EMG.normalise_data_MVC(emg_value)
-        vib_emg = process_EMG.threshold_reached(normal)
+        try:
+            data = read_uart.get_serial_data()
+            if len(data) > 11:  # update level when data is available
+                emg_value = read_uart.extract_emg_data(data)
+                normal = process_EMG.normalise_data_MVC(emg_value)
+                vib_emg = process_EMG.threshold_reached(normal)
 
-        if vib_emg:
-            level = process_EMG.define_dominant_muscle(normal)
-            print('level', level)
+                if vib_emg:
+                    level = process_EMG.define_dominant_muscle(normal)
+                    # print('level', level)
+                    index = level + 4
+                    vibrator_level = motors.level_list[index]
+                    pin_on_index = vibrator_level["PIN_INDEX"]
+                else:
+                    motors.vib_count = 0
+                    motors.prev_count = 0
+                    motors.prev_level = None
+                    pin_on_index = []
 
-            index = level + 4
-            vibrator_level = motors.level_list[index]
-            motors.adjust_off_time(vibrator_level)
-            motors.check_time_to_change(vibrator_level, now)
-            pin_on_index = vibrator_level["PIN_INDEX"]
-        else:
-            print(vib_emg)
-            motors.vib_count = 0
-            motors.prev_count = 0
-            motors.prev_level = None
-            pin_on_index = []
+                pin_off_index = set(motors.pin_index) - set(pin_on_index)
+                pins_off = [motors.pins[pin] for pin in pin_off_index]
 
-        pin_off_index = set(motors.pin_index) - set(pin_on_index)
-        pins_off = [motors.pins[pin] for pin in pin_off_index]
+                # turn off all others
+                motors.set_motor_value(pins_off, False)
 
-        # turn off all others
-        motors.set_motor_value(pins_off, False)
-        gc.collect()
+            if vib_emg:
+                motors.adjust_off_time(vibrator_level)
+                now = supervisor.ticks_ms()
+                motors.check_time_to_change(vibrator_level, now)
+
+        except KeyboardInterrupt:  # Turn the motors off nicely
+            print('Turning off')
+            pins_off = motors.pins
+            motors.set_motor_value(pins_off, False)
+            gc.collect()
+            break
 
 
 if __name__ == '__main__':
