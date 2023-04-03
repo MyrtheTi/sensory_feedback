@@ -28,6 +28,8 @@ class ReadUart():
         elif self.data_num_bytes == 4:
             self.data_type = 'f'     # 4 byte float
 
+        self.initialise_uart()
+
     def initialise_uart(self):
         """ Initialise UART port and set baud rate.
         Read up to array_length bytes at a time, or until timeout (s).
@@ -82,7 +84,6 @@ if __name__ == '__main__':
     print('start memory', start_mem)
 
     read_uart = ReadUart()
-    read_uart.initialise_uart()
 
     user = "me"
     date = '2023_02_24'
