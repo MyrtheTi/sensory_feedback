@@ -51,10 +51,8 @@ class ReadUart():
         start_index = self.raw_data.find(self.starting_byte)  # find start byte
         private_data = self.raw_data[start_index:]
 
-        if start_index != 0:
-            read_next = bytearray()
-            self.uart.readinto(read_next)  # read extra bytes
-            private_data += read_next  # add extra bytes to the end
+        read_next = self.uart.read(start_index)  # read extra bytes
+        private_data += bytearray(read_next)  # add extra bytes to the end
         return private_data
 
     def extract_emg_data(self, private_data):

@@ -8,15 +8,13 @@
 import asyncio
 import gc
 
-import supervisor
-
 from activate_vibration_motors import ActivateVibrationMotor
 from preprocessing import PreprocessEMG
 from read_uart import ReadUart
 
 
 async def check_serial_input(read_uart, process_EMG, motors):
-    """ Task 1: Check for emg signals and process them when it is available.
+    """ Task 1: Poll for emg signals and process them when it is available.
 
     Args:
         read_uart (Class): ReadUart instance.
@@ -32,9 +30,7 @@ async def check_serial_input(read_uart, process_EMG, motors):
 
             if motors.vib_emg:
                 level = process_EMG.define_dominant_muscle(normal)
-                # print('level', level)
-                index = level + 4
-                motors.vibrator_level = motors.level_list[index]
+                motors.vibrator_level = motors.level_list[level + 4]
                 motors.pin_on_index = motors.vibrator_level["PIN_INDEX"]
             else:
                 motors.vib_count = 0
@@ -58,17 +54,16 @@ async def activate_motors(motors):
         motors.set_motor_value(pins_off, False)
 
         if motors.vib_emg:
-            motors.adjust_off_time(motors.vibrator_level)
-            now = supervisor.ticks_ms()
-            motors.check_time_to_change(motors.vibrator_level, now)
-        await asyncio.sleep(0)
+            motors.adjust_off_time()
+            await motors.check_time_to_change()
+        else:
+            await asyncio.sleep(0)
 
 
 async def online_feedback_loop(
         user, feedback_folder, emg_folder,
         threshold_file='perceptual_threshold.csv', left_leg=True):
-    """ Loop to run in code.py on the microprocessor with CircuitPython.
-    Online processing of incoming EMG signals and activates the vibration
+    """ Online processing of incoming EMG signals and activates the vibration
     motors accordingly. Creates two asyncio tasks and runs these alternately.
 
     Args:

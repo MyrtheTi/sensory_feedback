@@ -6,11 +6,11 @@
  feedback according to predefined levels.
 """
 
+import asyncio
 import time
 
 import board
 import digitalio
-import supervisor
 
 from utils import read_file
 
@@ -49,15 +49,15 @@ class ActivateVibrationMotor():
 
         self.pin_index = list(range(0, len(self.pins)))  # 0 to 7
         self.left_leg = left_leg
-        self.min_off_time = 100  # milliseconds
-        self.max_off_time = 500  # milliseconds
+        self.min_off_time = 0.100  # seconds
+        self.max_off_time = 0.500  # seconds
         self.off_time = self.min_off_time
 
         self.vib_count = 0  # counts the times a motor is turned on
         self.prev_level = None
-        self.pin_on_index = []
-        self.vibrator_level = {}
-        self.vib_emg = False
+        self.pin_on_index = []  # indices from pin_index that are turned on
+        self.vibrator_level = {}  # current level information
+        self.vib_emg = False  # current threshold reached for vibrations
 
         self.path = f'user_files/{user}/{date}/'
 
@@ -88,7 +88,7 @@ class ActivateVibrationMotor():
         """
         self.thresholds = read_file(self.path, file, ['float'])[0]
         for index, level_conf in enumerate(self.level_list):
-            level_conf["VIBRATION_TIME"] = self.thresholds[index]
+            level_conf["VIBRATION_TIME"] = self.thresholds[index] / 1000
 
     def set_motor_value(self, pin_list, value=False):
         """ Turns on or off the vibrating motor by setting the pin value to
@@ -101,64 +101,53 @@ class ActivateVibrationMotor():
         for pin in pin_list:
             pin.value = value
 
-    def check_time_to_change(self, level, now):
+    async def check_time_to_change(self):
         """Checks the value of the pins and whether it is time to turn them on
         or off.
-
-        Args:
-            level (dict): The level information
-            now (timestamp): timestamp of loop
         """
-        pin_value = [pin.value for pin in level["PIN"]]
+        pin_value = [pin.value for pin in self.vibrator_level["PIN"]]
 
-        if all(pin_value) is False:
-            # check whether it is time to turn on
-            if now >= level["PREV_TIME"] + self.off_time:
-                level["PREV_TIME"] = now
-                self.set_motor_value(level["PIN"], True)
-                self.vib_count += 1
+        if all(pin_value) is False:  # turn on
+            self.set_motor_value(self.vibrator_level["PIN"], True)
+            self.vib_count += 1
+            await asyncio.sleep(self.vibrator_level["VIBRATION_TIME"])
 
-        else:   # pin_value is True
-            # check whether it is time to turn off
-            if now >= level["PREV_TIME"] + level["VIBRATION_TIME"]:
-                level["PREV_TIME"] = now
-                self.set_motor_value(level["PIN"], False)
+        else:   # turn off
+            self.set_motor_value(self.vibrator_level["PIN"], False)
+            await asyncio.sleep(self.off_time)
 
-    def adjust_off_time(self, vibrator_level):
+    def adjust_off_time(self, threshold=2):
         """ Adjusts time the vibrators are turned off. If the level is the
-        same for 2 seconds, the motors vibrate with a longer interval,
-        at max_off_time. If the level changes, the off_time resets.
+        same for threshold in seconds, the motors vibrate with a longer
+        interval, at max_off_time. If the level changes, the off_time resets.
 
         Args:
-            vibrator_level (dict): Information of the current level.
+            threshold (int, optional): Time (in seconds) after which the
+            interval between vibrations increases. Defaults to 2.
         """
-        level = vibrator_level["LEVEL"]
-        if level != self.prev_level:
+        if self.vibrator_level["LEVEL"] != self.prev_level:
             # resets frequency if EMG activation changes
             self.off_time = self.min_off_time
             self.vib_count = 0
-            self.prev_level = level
+            self.prev_level = self.vibrator_level["LEVEL"]
         else:
-            vibration_time = vibrator_level["VIBRATION_TIME"]
-            # more than 2 seconds the same level
-            if (vibration_time + self.min_off_time) * self.vib_count > 2000:
+            if (self.vibrator_level["VIBRATION_TIME"] + self.min_off_time) * \
+             self.vib_count > threshold:
                 # decrease frequency if the EMG activation is the same
                 self.off_time = self.max_off_time
 
-    def vibrate_motor(self, vibrator_level, duration=2):
+    async def vibrate_motor(self, duration=2):
         """ Activate motor specified by vibrator_level for duration.
 
         Args:
-            vibrator_level (dict): Level information
             duration (int, optional): Time (in seconds) the motor should
             vibrate on and off. Defaults to 2.
         """
-        start = supervisor.ticks_ms()
-        while supervisor.ticks_ms() - start < (duration * 1000):
-            now = supervisor.ticks_ms()
-            self.check_time_to_change(vibrator_level, now)
-            self.adjust_off_time(vibrator_level)
-        self.set_motor_value(vibrator_level["PIN"], False)  # turn off
+        start = time.monotonic()
+        while time.monotonic() - start < duration:
+            await self.check_time_to_change()
+            self.adjust_off_time()
+        self.set_motor_value(self.vibrator_level["PIN"], False)  # turn off
 
 
 if __name__ == "__main__":
@@ -170,6 +159,6 @@ if __name__ == "__main__":
 
     for vibrator_level in motors.level_list:  # loop through levels
         print('level', vibrator_level)
-        motors.vibrate_motor(vibrator_level, 2)
+        motors.vibrator_level = vibrator_level
+        asyncio.run(motors.vibrate_motor(2))
         time.sleep(1)
-    print(motors.level_list)
