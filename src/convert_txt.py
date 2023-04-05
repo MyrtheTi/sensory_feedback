@@ -54,12 +54,12 @@ def read_file(path, file_name, data_type=[None]):
 
 
 if __name__ == '__main__':
-    file = 'dorsi_flexion.txt'
-    user = 'U401'
-    date = '2023_03_17'
+    file_name = 'hold_150ms'
+    user = 'me'
+    date = '2023_03_23'
 
     path = f'user_files/{user}/{date}/'
-    data, level = read_file(path, file, ['int', None])
+    data, level = read_file(path, f'{file_name}.txt', ['int', None])
     data_array = np.array(data)
 
     data_frame = pd.DataFrame({
@@ -67,4 +67,4 @@ if __name__ == '__main__':
         'BSMB_MUSCLE_EXTEND': data_array[:, 1],
         'LEVEL': level, 'timestamp': np.arange(len(level))})
     print(data_frame.head())
-    data_frame.to_csv(path + 'dorsi_flexion.csv', index=False)
+    data_frame.to_csv(path + f'{file_name}.csv', index=False)
