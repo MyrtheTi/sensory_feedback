@@ -94,22 +94,24 @@ if __name__ == '__main__':
     print('initialised memory', initialised_mem)
 
     while True:
-        x += 1
         data = read_uart.get_serial_data()
-        emg_value = read_uart.extract_emg_data(data)
-        print(emg_value)
+        if len(data) > 11:  # update level when data is available
+            x += 1
 
-        normal = process_EMG.normalise_data_MVC(emg_value)
-        level = process_EMG.define_dominant_muscle(normal)
-        print(normal)
-        print(level)
+            emg_value = read_uart.extract_emg_data(data)
+            print(emg_value)
+
+            normal = process_EMG.normalise_data_MVC(emg_value)
+            level = process_EMG.define_dominant_muscle(normal)
+            print(normal)
+            print(level)
+
+            gc.collect()
+            # loop_mem = gc.mem_free()
+            # print('loop memory', x, loop_mem)
 
         if x == 100:  # stop
             break
-
-        gc.collect()
-        # loop_mem = gc.mem_free()
-        # print('loop memory', x, loop_mem)
 
     gc.collect()
     end_mem = gc.mem_free()
