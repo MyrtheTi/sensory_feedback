@@ -27,14 +27,15 @@ All code on the laptop is written in Python 3.10.8 and the following libraries a
 - mpl_point_clicker 0.3.1
 - mpl-interactions 0.22.1
 
-The code on the microprocessor is written in CircuitPython 7.3.3, with the following libraries installed:
+The code on the microprocessor is written in CircuitPython 8.0.5, with the following libraries installed:
+
 - asyncio 0.5.19
 - adafruit_ticks 1.0.9
 
 CircuitPython can be installed by following the
 [Adafruit tutorial](https://learn.adafruit.com/welcome-to-circuitpython).
 Libraries can be added manually from the [library bundles](https://circuitpython.org/libraries)
-or using [circup](https://learn.adafruit.com/keep-your-circuitpython-libraries-on-devices-up-to-date-with-circup/overview).
+or using [circup](https://learn.adafruit.com/keep-your-circuitpython-libraries-on-devices-up-to-date-with-circup/overview) 1.2.1.
 
 ## Files on the microprocessor
 
