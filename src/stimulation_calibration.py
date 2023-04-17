@@ -6,13 +6,14 @@
  level and save these in a file.
 """
 
+import asyncio
 import time
 
 from activate_vibration_motors import ActivateVibrationMotor
 from utils import mean, write_file
 
 
-def calibration_loop(motors, vibrator_level):
+def calibration_loop(motors):
     """ Increases vibration of vibrator_level with 1 ms at a time with
     intervals of 2 s on, 1 s off. User is asked to confirm continuation to the
     next level and for each step. When the user starts to feel the vibration
@@ -22,7 +23,6 @@ def calibration_loop(motors, vibrator_level):
 
     Args:
         motors (class): instance from ActivateVibrationMotor
-        vibrator_level (dict): level information
 
     Returns:
         float: vibration_time from the moment the loop is broken
@@ -34,10 +34,10 @@ def calibration_loop(motors, vibrator_level):
         on += 1
         vibration_time = on  # increase duration by 1ms
         print(vibration_time, 'ms')
-        vibrator_level["VIBRATION_TIME"] = vibration_time
+        motors.vibrator_level["VIBRATION_TIME"] = vibration_time / 1000
 
         motors.prev_level = None  # so off_time is not adjusted
-        motors.vibrate_motor(vibrator_level, 2)
+        asyncio.run(motors.vibrate_motor(2))
 
         user_input = input(
             'Enter a key when the vibration had an intensity of 2/10\n')
@@ -49,8 +49,8 @@ def calibration_loop(motors, vibrator_level):
 
 
 if __name__ == '__main__':
-    user = 'me'
-    date = '2023_03_28'  # make sure this folder exists
+    user = 'U747'
+    date = '2023_04_17'  # make sure this folder exists
     repeat = 2  # repeat the calibration 5 times
     left_leg = True
 
@@ -61,8 +61,9 @@ if __name__ == '__main__':
         for index, vibrator_level in enumerate(motors.level_list):
             print('level', vibrator_level)
             motors.set_motor_value(vibrator_level["PIN"], False)  # turn off
+            motors.vibrator_level = vibrator_level
 
-            perception = calibration_loop(motors, vibrator_level)
+            perception = calibration_loop(motors)
             thresholds[index].append(perception)
         print(thresholds)
 

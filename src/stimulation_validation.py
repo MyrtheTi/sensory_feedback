@@ -6,6 +6,7 @@
  Based on papers from Chee et al. 2022 and Tchimino et al. 2022.
 """
 
+import asyncio
 import random
 import time
 
@@ -43,16 +44,17 @@ def validation_loop(motors, validation=False, repeat=10):
             input(f'{int(len(stimulation_list) / len(motors.level_list))} '
                   'more round(s) to go')
         index = random.randrange(len(stimulation_list))
-        stimulus = stimulation_list[index]
+        motors.vibrator_level = stimulation_list[index]
+        motors.off_time = motors.min_off_time  # off_time shouldn't be adjusted
         stimulation_list.pop(index)
 
-        motors.vibrate_motor(stimulus, 2)
+        asyncio.run(motors.vibrate_motor(2))
         if validation:
             user = input('Enter level according to the user\n')
             user_answers.append(int(user))
-            stimulated.append(stimulus["LEVEL"])
+            stimulated.append(motors.vibrator_level["LEVEL"])
         else:
-            print(stimulus)
+            print(motors.vibrator_level["LEVEL"])
             input('Enter to continue to next stimulus')
         time.sleep(1)
 
@@ -87,12 +89,12 @@ def calculate_accuracy(stimulation_list, user_answers):
 
 
 if __name__ == '__main__':
-    user = 'U412'
-    date = '2023_03_09'
+    user = 'U747'
+    date = '2023_04_17'
     left_leg = True
 
     motors = ActivateVibrationMotor(user, date, left_leg)
     motors.set_thresholds()
     input('Press enter to start the familiarisation and validation')
-    validation_loop(motors, validation=False, repeat=1)  # familiarisation
+    validation_loop(motors, validation=False, repeat=2)  # familiarisation
     validation_loop(motors, validation=True, repeat=2)
