@@ -58,14 +58,16 @@ def validation_loop(motors, validation=False, repeat=10):
             input('Enter to continue to next stimulus')
         time.sleep(1)
 
-    print('You are finished!')
+    print('You are finished!\n')
     if validation:
         calculate_accuracy(stimulated, user_answers)
         try:
             write_file(motors.path, 'true_labels.csv', stimulated)
             write_file(motors.path, 'predicted_labels.csv', user_answers)
         except OSError:
-            print('Could not save the data')
+            print('Could not save the data.')
+            print('True labels:', stimulated)
+            print('Predicted labels:', user_answers)
 
 
 def calculate_accuracy(stimulation_list, user_answers):
@@ -89,12 +91,12 @@ def calculate_accuracy(stimulation_list, user_answers):
 
 
 if __name__ == '__main__':
-    user = 'U747'
-    date = '2023_04_17'
-    left_leg = True
+    user = 'U401'
+    date = '2023_04_25'
+    left_leg = False
 
     motors = ActivateVibrationMotor(user, date, left_leg)
     motors.set_thresholds()
     input('Press enter to start the familiarisation and validation')
-    validation_loop(motors, validation=False, repeat=2)  # familiarisation
-    validation_loop(motors, validation=True, repeat=2)
+    validation_loop(motors, validation=False, repeat=4)  # familiarisation
+    validation_loop(motors, validation=True, repeat=4)
