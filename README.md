@@ -26,6 +26,7 @@ All code on the laptop is written in Python 3.10.8 and the following libraries a
 - scikit-learn 1.2.1
 - mpl_point_clicker 0.3.1
 - mpl-interactions 0.22.1
+- openpyxl 3.0.10
 
 The code on the microprocessor is written in CircuitPython 8.0.5, with the following libraries installed:
 
