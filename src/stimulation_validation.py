@@ -45,7 +45,7 @@ def validation_loop(motors, validation=False, repeat=10):
                   'more round(s) to go')
         index = random.randrange(len(stimulation_list))
         motors.vibrator_level = stimulation_list[index]
-        motors.off_time = motors.min_off_time  # off_time shouldn't be adjusted
+        motors.prev_level = None  # so off_time is not adjusted
         stimulation_list.pop(index)
 
         asyncio.run(motors.vibrate_motor(2))
@@ -91,8 +91,8 @@ def calculate_accuracy(stimulation_list, user_answers):
 
 
 if __name__ == '__main__':
-    user = 'U401'
-    date = '2023_04_25'
+    user = 'U747'
+    date = '2023_05_03'
     left_leg = False
 
     motors = ActivateVibrationMotor(user, date, left_leg)
