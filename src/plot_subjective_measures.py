@@ -10,6 +10,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from math import factorial
 from scipy.stats import friedmanchisquare, wilcoxon
 
 
@@ -22,6 +23,9 @@ class AnalyseSubjectiveMeasures():
         self.session = session
         self.num_blocks = 4
         self.max_sessions = 3
+        elements = 2
+        self.max_combinations = factorial(self.num_blocks) / (
+            factorial(elements) * factorial(self.num_blocks - elements))
 
     def load_confidence(self):
         """ Loads excel file with confidence scores and saves it in DataFrame.
@@ -115,6 +119,7 @@ class AnalyseSubjectiveMeasures():
                 ['Confidence', 'Ease of use', 'Embodiment']].to_numpy().T)
         plt.ylabel('Score; low (0) to high (10)')
         plt.yticks(np.arange(11))
+        plt.ylim(0, 12.5)
         plt.xlabel('')
         plt.xticks(np.arange(self.num_blocks), labels=[
             'Baseline', 'EMG before SF', 'EMG + SF', 'EMG after SF'])
@@ -123,8 +128,8 @@ class AnalyseSubjectiveMeasures():
         else:
             title = 'Subjective measures during ramp ascension'
         plt.title(title)
-        plt.legend(loc='upper left', bbox_to_anchor=(1.04, 1))
-
+        plt.legend(bbox_to_anchor=(0, -0.05), loc="upper left",
+                   ncol=3)
         above_y = 0.2
         y_max_values = []
         for index, row in all_data.iterrows():
@@ -148,12 +153,13 @@ class AnalyseSubjectiveMeasures():
                     h = 0
                 if len(p_values) > 0:
                     p_value = row['all_p']
-                    if p_value < 0.05:
+                    if p_value < (0.05 / self.max_combinations):
+                        # bonferroni correction
                         text = '*'
-                        if p_value < 0.01:
+                        # if p_value < 0.01:
+                        #     text = '**'
+                        if p_value < 0.001:
                             text = '**'
-                        elif p_value < 0.001:
-                            text = '***'
 
                         x1 = row['Block'] - 1
                         x2 = row['Compare block'] - 1
