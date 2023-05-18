@@ -47,6 +47,9 @@ def read_file(path, file_name, data_type=[None]):
         lines = file.read().splitlines()
 
     data = []
+    if len(lines) != len(data_type):
+        data_type = data_type * int(len(lines) / len(data_type))
+
     for line, data_type in zip(lines, data_type):
         split_line = line.split(',')
 
