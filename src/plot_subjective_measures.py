@@ -7,10 +7,11 @@
  block, and activity. Saves the results under /user_files/results/.
 """
 
+from math import factorial
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from math import factorial
 from scipy.stats import friedmanchisquare, wilcoxon
 
 
@@ -35,8 +36,8 @@ class AnalyseSubjectiveMeasures():
             number (int): Number of elements of which all possible combinations
             when the number of self.elements are taken.
         """
-        self.max_combinations = factorial(number) / (
-            factorial(self.elements) * factorial(number - self.elements))
+        self.max_combinations = int(factorial(number) / (
+            factorial(self.elements) * factorial(number - self.elements)))
 
     def load_confidence(self):
         """ Loads excel file with confidence scores and saves it in DataFrame.
@@ -103,7 +104,6 @@ class AnalyseSubjectiveMeasures():
             p_values (DataFrame): DataFrame with p_values of statistical
             difference between blocks. Defaults to [].
         """
-
         avg_confidence = self.average_block(self.confidence)
         avg_nasa = self.average_block(self.nasa_tlx)
         avg_pembs = self.average_block(self.pembs_lla)
@@ -196,8 +196,8 @@ class AnalyseSubjectiveMeasures():
 
         Returns:
             list : contains the results of the friedman tests.
-            DataFrame or list: DataFrame when there is a statistical
-            difference between blocks. Otherwise empty list.
+            DataFrame: DataFrame with statistical difference between blocks,
+            otherwise empty.
         """
         all_data = pd.concat([self.confidence, self.nasa_tlx, self.pembs_lla],
                              ignore_index=True)
@@ -216,11 +216,9 @@ class AnalyseSubjectiveMeasures():
                     x_nasa, p_nasa, x_pembs, p_pembs]
 
         if p_nasa <= 0.05 or p_pembs < 0.05 or np.isnan(p_nasa):
-            pass
+            return friedman, self.wilcoxon_compare_sample(all_data)
         else:
-            return friedman, []
-
-        return friedman, self.wilcoxon_compare_sample(all_data)
+            return friedman, pd.DataFrame()
 
     def wilcoxon_compare_sample(self, all_data):
         """ Prepares the data for the wilcoxon test to compare within session
@@ -240,14 +238,16 @@ class AnalyseSubjectiveMeasures():
         pembs_w, pembs_p = [], []
 
         if self.compare_sessions:
-            sample_range_1 = all_data['Session'].unique().tolist()
-            file_name = f'user_files/results/{self.user}_Subjective_measures_wilcoxon_compare_sessions_block_{self.block}_{self.activity}.csv'
+            sample_range = all_data['Session'].unique().tolist()
+            compare = 'Block'
+            condition = self.block
         else:
-            sample_range_1 = all_data['Block'].unique().tolist()
-            file_name = f'user_files/results/{self.user}_Subjective_measures_wilcoxon_session_{self.session}_{self.activity}.csv'
+            sample_range = all_data['Block'].unique().tolist()
+            compare = 'Session'
+            condition = self.session
 
-        for condition_1 in sample_range_1:
-            for condition_2 in sample_range_1[condition_1:]:
+        for condition_1 in sample_range:
+            for condition_2 in sample_range[condition_1:]:
                 x.append(condition_1)
                 y.append(condition_2)
 
@@ -275,13 +275,14 @@ class AnalyseSubjectiveMeasures():
                 pembs_w.append(w)
                 pembs_p.append(p)
 
-        stats = pd.DataFrame({'Condition_1': x,
-                              'Condition_2': y,
-                              'all_w': all_w, 'all_p': all_p,
-                              'NASA_w': nasa_w, 'NASA_p': nasa_p,
-                              'pembs_w': pembs_w, 'pembs_p': pembs_p})
+        stats = pd.DataFrame({
+            'Activity': [self.activity] * self.max_combinations,
+            compare: [condition] * self.max_combinations,
+            'Condition_1': x, 'Condition_2': y,
+            'all_w': all_w, 'all_p': all_p,
+            'NASA_w': nasa_w, 'NASA_p': nasa_p,
+            'pembs_w': pembs_w, 'pembs_p': pembs_p})
 
-        stats.to_csv(file_name, index=False)
         return stats
 
     def wilcoxon_test(self, data, condition_1, condition_2):
@@ -290,9 +291,9 @@ class AnalyseSubjectiveMeasures():
 
         Args:
             data (DataFrame): DataFrame with all data to test on.
-            block (int): Block of first set of measures.
-            compare_block (int): Block of second set of measures to compare
-            first block against.
+            condition_1 (int): Block or session of first set of measures.
+            condition_2 (int): Block or session of second set of measures to
+            compare first block against.
 
         Returns:
             float, float: statistic, and p-value of the wilcoxon test.
@@ -366,6 +367,11 @@ class AnalyseSubjectiveMeasures():
             friedman_between_session_file = f'user_files/results/{self.user}_Subjective_measures_friedman_between_session.csv'
             friedman_between_session_list = []
 
+            wilcoxon_within_session_file = f'user_files/results/{self.user}_Subjective_measures_wilcoxon_within_session.csv'
+            wilcoxon_within_session_df = pd.DataFrame()
+            wilcoxon_between_session_file = f'user_files/results/{self.user}_Subjective_measures_wilcoxon_between_session.csv'
+            wilcoxon_between_session_df = pd.DataFrame()
+
             for activity in self.activities:
                 self.activity = activity
 
@@ -379,9 +385,15 @@ class AnalyseSubjectiveMeasures():
                     if self.average_block(self.confidence
                                           )['Answer'].sum() == 0:
                         continue  # skip if no data
-                    friedman, stats = self.calculate_stats()
+                    friedman, wilcoxon_stats = self.calculate_stats()
                     friedman_within_session_list.append(friedman)
-                    self.plot_results(stats)
+                    if wilcoxon_within_session_df.empty:
+                        wilcoxon_within_session_df = wilcoxon_stats
+                    else:
+                        wilcoxon_within_session_df = pd.concat([
+                            wilcoxon_within_session_df, wilcoxon_stats],
+                            ignore_index=True)
+                    self.plot_results(wilcoxon_stats)
 
                 # compare sessions
                 self.compare_sessions = True
@@ -392,16 +404,26 @@ class AnalyseSubjectiveMeasures():
                     if self.average_block(self.confidence
                                           )['Answer'].sum() == 0:
                         continue  # skip if no data
-                    friedman, _ = self.calculate_stats()
+                    friedman, wilcoxon_stats = self.calculate_stats()
                     friedman_between_session_list.append(friedman)
+                    if wilcoxon_between_session_df.empty:
+                        wilcoxon_between_session_df = wilcoxon_stats
+                    else:
+                        wilcoxon_between_session_df = pd.concat([
+                            wilcoxon_between_session_df, wilcoxon_stats],
+                            ignore_index=True)
 
+            # save all in csv files
             friedman_within_session_df = pd.DataFrame(
                 friedman_within_session_list,
                 columns=['Activity', 'Session', 'all_chi', 'all_p',
                          'NASA_chi', 'NASA_p', 'pembs_chi', 'pembs_p'])
-            if not friedman_within_session_df.empty:
+            if not friedman_within_session_df.empty:  # save when not empty
                 friedman_within_session_df.to_csv(
                     friedman_within_session_file, index=False)
+            if not wilcoxon_within_session_df.empty:
+                wilcoxon_within_session_df.to_csv(
+                    wilcoxon_within_session_file, index=False)
 
             friedman_between_session_df = pd.DataFrame(
                 friedman_between_session_list,
@@ -410,6 +432,9 @@ class AnalyseSubjectiveMeasures():
             if not friedman_between_session_df.empty:
                 friedman_between_session_df.to_csv(
                     friedman_between_session_file, index=False)
+            if not wilcoxon_between_session_df.empty:
+                wilcoxon_between_session_df.to_csv(
+                    wilcoxon_between_session_file, index=False)
 
     def select_sample(self, data):
         """ Select a sample of the data based on the defined parameters.
