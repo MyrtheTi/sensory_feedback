@@ -7,8 +7,10 @@
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import tikzplotlib
 
 from preprocessing import PreprocessEMG
+from utils import tikzplotlib_fix_ncols
 
 
 def extract_data(filename, verbose=True, comma=False):
@@ -37,9 +39,10 @@ def extract_data(filename, verbose=True, comma=False):
 
 
 def visualise_data(raw_data, normal_data, data_file,
-                   extend='BSMB_MUSCLE_EXTEND', flex='BSMB_MUSCLE_FLEX'):
+                   extend='BSMB_MUSCLE_EXTEND', flex='BSMB_MUSCLE_FLEX',
+                   all=True):
     """ Plots data in subplots of raw data, normalised data, and difference
-    data with defined vibration levels.
+    data and vibration levels. Saves data in .tex files.
 
     Args:
         raw_data (data frame): data frame with raw data
@@ -49,33 +52,40 @@ def visualise_data(raw_data, normal_data, data_file,
         Defaults to 'BSMB_MUSCLE_EXTEND'.
         flex (str, optional): column name for flexion data.
         Defaults to 'BSMB_MUSCLE_FLEX'.
+        all (boolean, optional): Indicates if all diagrams are plotted or just
+        the raw EMG data. Defaults to True.
     """
-    fig, axes = plt.subplots(ncols=3, figsize=(20, 10))
-    ax1, ax2, ax3 = axes.flatten()
+    if all:
+        data_list = [raw_data, normal_data, normal_data, normal_data]
+        y_list = [[extend, flex], [extend, flex], 'difference', 'LEVEL']
+        y_label_list = ['Raw EMG data (V)', 'Normalised EMG data',
+                        'Normalised extension - flexion', 'Vibration level']
+        label_list = [['Extension muscle', 'Flexion muscle'],
+                      ['Extension muscle', 'Flexion muscle'],
+                      'Extension - Flexion', 'Feedback level']
+        name_list = ['raw', 'normal', 'difference', 'level']
+        normal_data['difference'] = normal_data[extend] - normal_data[flex]
+    else:
+        data_list = [raw_data]
+        y_list = [[extend, flex]]
+        y_label_list = ['Raw EMG data (V)']
+        label_list = [['Extension muscle', 'Flexion muscle']]
+        name_list = ['raw']
 
-    raw_data.plot(kind='line', x='timestamp', y=[extend, flex], ax=ax1)
-    ax1.set_ylabel('Raw EMG data')
+    for data, y, y_label, label, name in zip(data_list, y_list, y_label_list,
+                                             label_list, name_list):
+        fig, ax1 = plt.subplots(figsize=(15, 7))
 
-    normal_data.plot(kind='line', x='timestamp', y=[extend, flex], ax=ax2)
-    ax2.set_ylabel('Normalised EMG data')
+        data.plot(kind='line', x='timestamp', y=y, ax=ax1, label=label)
+        ax1.set_ylabel(y_label)
+        ax1.set_xlabel('Time (s)')
+        plt.grid()
 
-    normal_data['difference'] = normal_data[extend] - normal_data[flex]
-    normal_data.plot(kind='line', x='timestamp', y='difference', ax=ax3)
-    ax3.set_ylabel('Normalised extension - flexion')
-    ax3.set_ylim(-1, 1)
-    ax3.legend(loc='upper left')
+        tikzplotlib_fix_ncols(fig)
 
-    ax4 = ax3.twinx()
-    ax4.set_ylim(-4, 4)
-    normal_data.plot(
-        kind='line', x='timestamp', y='LEVEL', color='orange', ax=ax4)
-    ax4.set_ylabel('Vibration level')
-    ax4.legend(loc='upper right')
-
-    plt.grid()
-    plt.suptitle(f'EMG activity from {data_file}')
-    plt.tight_layout()
-    plt.show()
+        file_name = data_file.split('.')[0] + f'_{name}.tex'
+        tikzplotlib.save(f'user_files/results/{file_name}')
+        plt.show()
 
 
 def simulate_online(user, emg_folder, data_folder, data_file,
@@ -103,7 +113,8 @@ def simulate_online(user, emg_folder, data_folder, data_file,
         data = extract_data(data_path)
     else:
         data = pd.read_csv(data_path)
-    print(data.head())
+
+    data['timestamp'] = (data['timestamp'] - data['timestamp'].iloc[0]) / 1000
     raw_data = data[['timestamp', extend, flex]]
 
     levels = []
@@ -111,8 +122,6 @@ def simulate_online(user, emg_folder, data_folder, data_file,
     normalised_extend = []
 
     process_EMG = PreprocessEMG(user, emg_folder)
-    # process_EMG.mvc = process_EMG.create_dict('mvc copy.csv')
-    # process_EMG.rest = process_EMG.create_dict('rest_activity copy.csv')
     vib_emg = False
 
     for _, row in data.iterrows():  # loop through data as if live data
@@ -132,7 +141,7 @@ def simulate_online(user, emg_folder, data_folder, data_file,
     normal_data = pd.DataFrame({
         'timestamp': data['timestamp'], flex: normalised_flex,
         extend: normalised_extend, 'LEVEL': levels})
-    visualise_data(raw_data, normal_data, data_file)
+    return raw_data, normal_data
 
 
 if __name__ == "__main__":
@@ -142,5 +151,7 @@ if __name__ == "__main__":
     data_file = 'sEMG_feedback_power_ankle_log.csv'
     from_log = True
 
-    simulate_online(user, emg_calibration, data_folder, data_file,
-                    from_log=from_log)
+    raw, normal = simulate_online(user, emg_calibration, data_folder,
+                                  data_file, from_log=from_log)
+
+    visualise_data(raw, normal, data_file, all=True)
