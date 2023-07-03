@@ -12,7 +12,10 @@ from math import factorial
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import tikzplotlib
 from scipy.stats import friedmanchisquare, wilcoxon
+
+from utils import tikzplotlib_fix_ncols
 
 
 class AnalyseSubjectiveMeasures():
@@ -126,7 +129,7 @@ class AnalyseSubjectiveMeasures():
             return  # nothing to plot
 
         all_data.plot.bar(
-            x='Block', rot=0, yerr=standard_dev[
+            x='Block', rot=45, yerr=standard_dev[
                 ['Confidence', 'Ease of use', 'Embodiment']].to_numpy().T)
         plt.ylabel('Score; low (0) to high (10)')
         plt.yticks(np.arange(11))
@@ -186,9 +189,11 @@ class AnalyseSubjectiveMeasures():
                         plt.text((x1 + x2) * .5, y+above_y, text, ha='center',
                                  va='bottom', c='black')
 
-        plt.savefig(
-            f'user_files/results/{self.user}_Subjective_measures_session_{self.session}_{self.activity}.pdf',
-            bbox_inches="tight")
+        plt.grid()
+        fig = plt.gcf()
+        tikzplotlib_fix_ncols(fig)
+        tikzplotlib.save(
+            f'user_files/results/{self.user}_Subjective_measures_session_{self.session}_{self.activity}.tex')
 
     def calculate_stats(self):
         """ Performs the statistical analysis between all combinations of
