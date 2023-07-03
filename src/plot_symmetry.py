@@ -12,8 +12,9 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import tikzplotlib
 
-from utils import read_file
+from utils import read_file, tikzplotlib_fix_ncols
 
 
 class AnalyseGaitData():
@@ -46,7 +47,6 @@ class AnalyseGaitData():
         dir = os.listdir(self.path)
         folders = [folder for folder in dir if '.pdf' not in folder]
         folders.sort()
-        # print(folders)
         data = pd.DataFrame()
 
         blocks = list(np.arange(1, self.num_blocks + 1)) * self.num_activities
@@ -63,7 +63,7 @@ class AnalyseGaitData():
         for i, folder in zip(index, folders):
             trial = pd.read_csv(self.path + folder + '\\parameters.csv').T
             trial.dropna(inplace=True)
-            trial.set_axis(self.list_param, axis=0, inplace=True)
+            trial = trial.set_axis(self.list_param, axis=0)
             data[i] = trial
             asi = self.calculate_asymmetry(trial)
             symmetry_index.loc[[i], 'ASI'] = asi
@@ -104,16 +104,23 @@ class AnalyseGaitData():
             and block.
         """
         data.unstack()['ASI'].plot.bar(y=[
-            'Ground level walking', 'Ascending slope'], rot=0)
+            'Ground level walking', 'Ascending slope'], rot=45,
+            label=['Level ground', 'Inclined'])
         plt.xticks(np.arange(4), labels=[
             'Baseline', 'EMG before SF', 'EMG + SF', 'EMG after SF'])
         plt.ylabel('ASI (%)')
-        plt.legend(['Level ground', 'Inclined'])
+        plt.hlines(10, -1, 4, colors='black', linestyles='dashed',
+                   label='Healthy asymmetry')
+        plt.legend(bbox_to_anchor=(1.02, 1), loc="upper left")
+
         plt.title('Absolute symmetry index')
         plt.xlabel('')
-        plt.savefig(
-            f'user_files/results/{self.user}_{self.date}_ASI.pdf',
-            bbox_inches="tight")
+        plt.grid()
+
+        fig = plt.gcf()
+        tikzplotlib_fix_ncols(fig)
+        tikzplotlib.save(
+            f'user_files/results/{self.user}_{self.date}_ASI.tex')
 
     def analyse_data(self, users, dates, prosthetic_sides):
         """ Loops through user list to load the data for each user.
