@@ -1,12 +1,11 @@
-# Sensory feedback for EMG control
+# Towards bidirectional lower limb prostheses: restoring proprioception using EMG based vibrotactile feedback
 
-Author: Myrthe Tilleman, contact through email: [mtillerman@ossur.com](mailto:mtillerman@ossur.com) or [metill@utu.fi](mailto:metill@utu.fi).
+Author: Myrthe Tilleman, contact through email: [metill@utu.fi](mailto:metill@utu.fi).
 
-This repository contains all the code for my Master Thesis in Human Neuroscience.
-This project is a collaboration of the University of Turku and Össur, Iceland.
-The goal of this project is to provide sensory feedback to persons with a leg amputation and EMG controlled prosthetic devices.
-This work contributes towards bidirectional prosthetics.
-The thesis paper can be found through the library of the University of Turku.
+This repository contains all the code that was used for my Master Thesis in Human Neuroscience at the University of Turku, Finland.
+This project was realised in collaboration with Össur, Iceland.
+The goal of this thesis was to design, develop, and evaluate a novel vibrotactile feedback system in combination with an EMG-controlled powered knee or ankle prosthesis to restore proprioception.
+The thesis paper can be found through the library of the University of Turku, a link will be added here when available.
 
 ## Materials
 
@@ -14,7 +13,7 @@ For this project, I used a standard laptop (Lenovo ThinkPad P53s),
 a microprocessor
 ([Seeed Studio XIAO nRF52840 Sense, Seeed Technology Co., Ltd, China](https://www.seeedstudio.com/Seeed-XIAO-BLE-Sense-nRF52840-p-5253.html)),
 seven 9mm vibrators (307-103, Precision Microdrives Limited, United Kingdom),
-and the prosthetic intent control system (PICS) designed by Össur to collect, amplify, and preprocess EMG data.
+and an EMG system designed by Össur to collect, amplify, and preprocess EMG data.
 
 ## Requirements
 
@@ -84,15 +83,16 @@ Then, create a folder with the current date for the corresponding user in the fo
 
 ### EMG calibration
 
-For the EMG recording, don the custom made liner and socket correctly and connect to the PICS through the Össur Toolbox.
-Record about 10 to 12 seconds of rest activity and save this log in `rest.csv`.
-Then ask the user to contract their extensor muscle 3 times for a few seconds with rest in between.
-Save this log in `extend.csv`.
-Repeat this process for the flexor muscle and save the file in `flex.csv`.
+For the EMG recording, don the custom made liner and socket correctly and connect to the EMG system through the Össur Toolbox.
+EMG calibration can be done by manually adding the maximum voluntary contraction and rest levels in `mvc.csv` and `rest.csv` files after a signal check or by following the steps described below:
 
-Before running the EMG_calibration, make sure all files are saved in the folder that corresponds to the user and the date.
-Then run [EMG_calibration.py](src/EMG_calibration.py) on laptop to create rest_activity and mvc files.
-Finally, copy these files to the correct folder on the microprocessor.
+- Record about 10 to 12 seconds of rest activity and save this log in `rest.csv`.
+- Ask the user to contract their extensor muscle 3 times for a few seconds with rest in between.
+- Save this log in `extend.csv`.
+- Repeat this process for the flexor muscle and save the file in `flex.csv`.
+- Make sure all files are saved in the folder that corresponds to the user and the date.
+- Run [EMG_calibration.py](src/EMG_calibration.py) on laptop to create rest_activity and mvc files.
+- Copy these files to the correct folder on the microprocessor.
 
 ### Feedback calibration
 
