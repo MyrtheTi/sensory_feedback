@@ -211,7 +211,7 @@ class EmgCalibration():
                 plt.axvline(x_coordinates, color='red')
 
         plt.grid()
-        plt.title(f'EMG activity over timed during {activity}')
+        plt.title(f'EMG activity over time during {activity}')
         plt.show()
 
 
