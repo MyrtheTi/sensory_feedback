@@ -1,11 +1,11 @@
 # Towards bidirectional lower limb prostheses: restoring proprioception using EMG based vibrotactile feedback
 
-Author: Myrthe Tilleman, contact through email: [metill@utu.fi](mailto:metill@utu.fi).
+Author: Myrthe Tilleman, contact through email: [myrtilleb2@gmail.com](mailto:myrtilleb2@gmail.com).
 
 This repository contains all the code that was used for my Master Thesis in Human Neuroscience at the University of Turku, Finland.
 This project was realised in collaboration with Össur, Iceland.
 The goal of this thesis was to design, develop, and evaluate a novel vibrotactile feedback system in combination with an EMG-controlled powered knee or ankle prosthesis to restore proprioception.
-The thesis paper can be found through the library of the University of Turku, a link will be added here when available.
+The [thesis](https://www.utupub.fi/handle/10024/175696) is available through the library of the University of Turku.
 
 ## Materials
 
